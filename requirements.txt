@@ -6,3 +6,5 @@ microsoft-teams-apps[graph]==2.0.16
 google-genai==2.23.0
 pymongo==4.18.2
 httpx==0.28.1
+openpyxl==3.1.5
+python-docx==1.2.0

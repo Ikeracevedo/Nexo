@@ -10,6 +10,9 @@ from dataclasses import dataclass
 MIME_DOCX = (
     "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
 )
+MIME_XLSX = (
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+)
 
 # Tipos que el modelo lee directamente (se le envian tal cual).
 MIMES_NATIVOS = frozenset(

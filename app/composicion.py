@@ -4,16 +4,18 @@ from __future__ import annotations
 
 from typing import Any
 
+from app.adaptadores.extractor_docx import ExtractorDocx
+from app.adaptadores.extractor_xlsx import ExtractorXlsx
 from app.adaptadores.fuente_ejemplo import FuenteEjemplo
 from app.adaptadores.gemini_provider import GeminiProvider
 from app.adaptadores.graph_calendario import FuenteCalendarioGraph
-from app.config import Configuracion
-from app.puertos.llm_provider import LLMProvider
-from app.puertos.task_source import TaskSource
-from app.servicios.servicio_agenda import ServicioAgenda
 from app.adaptadores.memoria_en_proceso import MemoriaEnProceso
 from app.adaptadores.memoria_mongo import MemoriaMongo
+from app.config import Configuracion
+from app.puertos.llm_provider import LLMProvider
 from app.puertos.memoria_conversacion import MemoriaConversacion
+from app.puertos.task_source import TaskSource
+from app.servicios.servicio_agenda import ServicioAgenda
 from app.servicios.servicio_conversacion import ServicioConversacion
 
 
@@ -33,6 +35,7 @@ def proveedor_gemini(config: Configuracion) -> LLMProvider:
     """Construye el proveedor de Gemini."""
     return GeminiProvider(config)
 
+
 def memoria_de_conversacion(config: Configuracion) -> MemoriaConversacion:
     """Mongo si hay URI; si no, RAM (se pierde al reiniciar)."""
     if config.mongodb_uri:
@@ -41,7 +44,10 @@ def memoria_de_conversacion(config: Configuracion) -> MemoriaConversacion:
 
 
 def servicio_conversacion(config: Configuracion) -> ServicioConversacion:
+    """Chat con Gemini: memoria por conversación y lectura de Word y Excel."""
     return ServicioConversacion(
         llm=proveedor_gemini(config),
         memoria=memoria_de_conversacion(config),
+        extractor_docx=ExtractorDocx(),
+        extractor_xlsx=ExtractorXlsx(),
     )

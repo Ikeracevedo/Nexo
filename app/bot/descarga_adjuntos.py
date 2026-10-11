@@ -1,15 +1,21 @@
-"""Descarga de adjuntos desde Teams (por ahora, solo imagenes).
+"""Descarga de adjuntos desde Teams: imagenes y archivos (PDF, Word, Excel).
 
 Vive en app/bot porque saber como entrega Teams los archivos es asunto
 del canal: el nucleo solo recibe objetos Adjunto ya descargados.
 
-Una imagen pegada en el chat llega como un adjunto con contentType
-"image/*" y un contentUrl que exige el token del bot (Authorization:
-Bearer). Ese token se pide con las credenciales del bot (client credentials).
+Teams entrega dos clases de adjunto:
+
+- Imagen pegada en el chat: contentType "image/*" y un contentUrl que exige
+  el token del bot (Authorization: Bearer). Ese token se pide con las
+  credenciales del bot (client credentials).
+- Archivo subido con el clip: contentType
+  "application/vnd.microsoft.teams.file.download.info", con una URL de
+  descarga que YA viene autorizada (downloadUrl). Esa se baja sin token.
 """
 
 from __future__ import annotations
 
+import json
 import logging
 from collections.abc import Iterable
 from typing import Any
@@ -20,6 +26,8 @@ import httpx
 from app.config import Configuracion
 from app.dominio.adjunto import (
     MAX_BYTES_ADJUNTO,
+    MIME_DOCX,
+    MIME_XLSX,
     Adjunto,
     AdjuntoNoSoportadoError,
 )
@@ -41,6 +49,27 @@ _EXTENSIONES = {
 
 MAX_IMAGENES = 4
 
+# --- Archivos subidos con el clip -----------------------------------------
+
+_TIPO_ARCHIVO_TEAMS = "application/vnd.microsoft.teams.file.download.info"
+
+_MIME_POR_EXTENSION = {
+    "pdf": "application/pdf",
+    "docx": MIME_DOCX,
+    "xlsx": MIME_XLSX,
+}
+
+# Los .docx y .xlsx son zips (empiezan por "PK"); los PDF por "%PDF".
+_FIRMAS = {
+    "pdf": b"%PDF",
+    "docx": b"PK\x03\x04",
+    "xlsx": b"PK\x03\x04",
+}
+
+_FORMATOS_ANTIGUOS = {"doc": "docx", "xls": "xlsx"}
+
+MAX_ARCHIVOS = 3
+
 
 def _campo(adjunto: Any, *nombres: str) -> Any:
     """Lee un campo aceptando snake_case, camelCase, objetos o diccionarios."""
@@ -53,12 +82,15 @@ def _campo(adjunto: Any, *nombres: str) -> Any:
     return None
 
 
+def _tipo(adjunto: Any) -> str:
+    return _campo(adjunto, "content_type", "contentType") or ""
+
+
 def _urls_de_imagenes(attachments: Iterable[Any]) -> list[str]:
     urls: list[str] = []
     for adjunto in attachments:
-        tipo = _campo(adjunto, "content_type", "contentType") or ""
         url = _campo(adjunto, "content_url", "contentUrl")
-        if tipo.startswith("image/") and url:
+        if _tipo(adjunto).startswith("image/") and url:
             urls.append(url)
     return urls[:MAX_IMAGENES]
 
@@ -98,7 +130,7 @@ async def _token_del_bot(config: Configuracion, cliente: httpx.AsyncClient) -> s
     except (httpx.HTTPError, KeyError, ValueError) as error:
         logger.warning("No se pudo obtener el token del bot: %s", type(error).__name__)
         raise AdjuntoNoSoportadoError(
-            "No pude autenticarme para descargar la imagen."
+            "No pude autenticarme para descargar el archivo."
         ) from error
 
 
@@ -113,11 +145,14 @@ async def _bajar(url: str, token: str | None, cliente: httpx.AsyncClient) -> byt
             datos.extend(trozo)
             if len(datos) > MAX_BYTES_ADJUNTO:
                 limite = MAX_BYTES_ADJUNTO // (1024 * 1024)
-                raise AdjuntoNoSoportadoError(f"La imagen pesa más de {limite} MB.")
+                raise AdjuntoNoSoportadoError(f"El archivo pesa más de {limite} MB.")
     return bytes(datos)
 
 
-async def _descargar(
+# --- Imagenes --------------------------------------------------------------
+
+
+async def _descargar_imagenes(
     urls: list[str],
     config: Configuracion,
     cliente: httpx.AsyncClient,
@@ -176,7 +211,132 @@ async def descargar_imagenes(
         return []
 
     if cliente is not None:
-        return await _descargar(urls, config, cliente)
+        return await _descargar_imagenes(urls, config, cliente)
 
     async with httpx.AsyncClient(timeout=20) as propio:
-        return await _descargar(urls, config, propio)
+        return await _descargar_imagenes(urls, config, propio)
+
+
+# --- Archivos (PDF, Word, Excel) --------------------------------------------
+
+
+def _contenido(adjunto: Any) -> Any:
+    contenido = _campo(adjunto, "content")
+    if isinstance(contenido, str):
+        try:
+            return json.loads(contenido)
+        except ValueError:
+            return None
+    return contenido
+
+
+def _archivos_de_teams(attachments: Iterable[Any]) -> list[tuple[str, str, str]]:
+    """Devuelve (nombre, extension, url) de cada archivo valido.
+
+    Falla con un mensaje claro si el tipo no se soporta, ANTES de descargar.
+    """
+    archivos: list[tuple[str, str, str]] = []
+
+    for adjunto in attachments:
+        if _tipo(adjunto) != _TIPO_ARCHIVO_TEAMS:
+            continue
+
+        contenido = _contenido(adjunto)
+        url = _campo(contenido, "download_url", "downloadUrl") if contenido else None
+        nombre = _campo(adjunto, "name") or ""
+        extension = str(
+            (_campo(contenido, "file_type", "fileType") if contenido else None)
+            or (nombre.rsplit(".", 1)[-1] if "." in nombre else "")
+        ).lower()
+
+        if not url:
+            continue
+
+        if extension in _FORMATOS_ANTIGUOS:
+            moderno = _FORMATOS_ANTIGUOS[extension]
+            raise AdjuntoNoSoportadoError(
+                f"«{nombre or 'El archivo'}» está en un formato antiguo (.{extension}). "
+                f"Guárdalo como .{moderno} y envíalo otra vez."
+            )
+
+        if extension not in _MIME_POR_EXTENSION:
+            raise AdjuntoNoSoportadoError(
+                f"No sé leer archivos .{extension or 'desconocidos'}. "
+                "Puedo leer imágenes, PDF, Word (.docx) y Excel (.xlsx)."
+            )
+
+        archivos.append((nombre or f"archivo.{extension}", extension, url))
+
+    return archivos[:MAX_ARCHIVOS]
+
+
+async def _descargar_archivos(
+    archivos: list[tuple[str, str, str]],
+    cliente: httpx.AsyncClient,
+) -> list[Adjunto]:
+    adjuntos: list[Adjunto] = []
+
+    for nombre, extension, url in archivos:
+        partes = urlparse(url)
+        if partes.scheme != "https":
+            raise AdjuntoNoSoportadoError(
+                "No puedo descargar ese archivo: el enlace no es seguro."
+            )
+
+        try:
+            # La URL de descarga ya viene autorizada: NO se envia el token del bot.
+            datos = await _bajar(url, None, cliente)
+        except httpx.HTTPError as error:
+            estado = getattr(getattr(error, "response", None), "status_code", "?")
+            logger.warning(
+                "Fallo la descarga del archivo (estado %s, host %s)",
+                estado,
+                partes.hostname,
+            )
+            raise AdjuntoNoSoportadoError(
+                f"No pude descargar «{nombre}». Intenta enviarlo otra vez."
+            ) from error
+
+        if not datos.startswith(_FIRMAS[extension]):
+            raise AdjuntoNoSoportadoError(
+                f"«{nombre}» no parece un archivo .{extension} válido."
+            )
+
+        adjuntos.append(Adjunto(nombre, _MIME_POR_EXTENSION[extension], datos))
+
+    return adjuntos
+
+
+async def descargar_archivos(
+    attachments: Iterable[Any],
+    cliente: httpx.AsyncClient | None = None,
+) -> list[Adjunto]:
+    """Descarga los archivos (PDF, Word, Excel) subidos con el clip."""
+    archivos = _archivos_de_teams(attachments)
+    if not archivos:
+        return []
+
+    if cliente is not None:
+        return await _descargar_archivos(archivos, cliente)
+
+    async with httpx.AsyncClient(timeout=30) as propio:
+        return await _descargar_archivos(archivos, propio)
+
+
+# --- Punto de entrada para el bot ---------------------------------------------
+
+
+async def descargar_adjuntos(
+    attachments: Iterable[Any],
+    config: Configuracion,
+    cliente: httpx.AsyncClient | None = None,
+) -> list[Adjunto]:
+    """Descarga todo lo que el nucleo sabe leer: imagenes y archivos."""
+    lista = list(attachments)
+
+    # Solo tipos y cantidad, nunca URLs. Sirve para depurar que llega.
+    logger.info("Tipos de adjuntos recibidos: %s", [_tipo(a) for a in lista])
+
+    imagenes = await descargar_imagenes(lista, config, cliente)
+    archivos = await descargar_archivos(lista, cliente)
+    return [*imagenes, *archivos]

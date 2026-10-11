@@ -7,6 +7,7 @@ from datetime import datetime
 from app.dominio.adjunto import (
     MAX_BYTES_ADJUNTO,
     MIME_DOCX,
+    MIME_XLSX,
     MIMES_NATIVOS,
     Adjunto,
     AdjuntoNoSoportadoError,
@@ -75,12 +76,17 @@ class ServicioConversacion:
         instruccion: str = INSTRUCCION_POR_DEFECTO,
         max_turnos: int = 10,
         extractor_docx: ExtractorTexto | None = None,
+        extractor_xlsx: ExtractorTexto | None = None,
     ) -> None:
         self._llm = llm
         self._memoria = memoria
         self._instruccion = instruccion
         self._max_turnos = max_turnos
-        self._extractor_docx = extractor_docx
+        # Tipos que el modelo no lee directo: se convierten a texto antes.
+        self._extractores: dict[str, ExtractorTexto | None] = {
+            MIME_DOCX: extractor_docx,
+            MIME_XLSX: extractor_xlsx,
+        }
 
     async def responder(
         self,
@@ -138,17 +144,22 @@ class ServicioConversacion:
                     f"«{a.nombre}» pesa más de {limite} MB."
                 )
 
+            extractor = self._extractores.get(a.mime)
+
             if a.mime in MIMES_NATIVOS:
                 nativos.append(a)
-            elif a.mime == MIME_DOCX and self._extractor_docx is not None:
-                texto = await asyncio.to_thread(
-                    self._extractor_docx.extraer_texto, a.datos
-                )
+            elif extractor is not None:
+                try:
+                    texto = await asyncio.to_thread(extractor.extraer_texto, a.datos)
+                except Exception as error:
+                    raise AdjuntoNoSoportadoError(
+                        f"No pude leer «{a.nombre}». Puede estar dañado o protegido."
+                    ) from error
                 bloques.append(_bloque_documento(a.nombre, texto))
             else:
                 raise AdjuntoNoSoportadoError(
                     f"No sé leer «{a.nombre}» ({a.mime}). "
-                    "Puedo leer imágenes, PDF y Word (.docx)."
+                    "Puedo leer imágenes, PDF, Word (.docx) y Excel (.xlsx)."
                 )
 
         return nativos, bloques
