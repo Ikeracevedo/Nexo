@@ -19,6 +19,8 @@ from __future__ import annotations
 
 from typing import Any
 
+from app.adaptadores.extractor_docx import ExtractorDocx
+from app.adaptadores.extractor_xlsx import ExtractorXlsx
 from app.adaptadores.fuente_ejemplo import FuenteEjemplo
 from app.adaptadores.gemini_provider import GeminiProvider
 from app.adaptadores.graph_calendario import FuenteCalendarioGraph
@@ -94,4 +96,9 @@ def servicio_conversacion(config: Configuracion) -> ServicioConversacion:
 def servicio_chat_general(config: Configuracion) -> ServicioChatGeneral:
     """Chat de Julián con memoria; el modo local usa RAM si no hay Mongo."""
     memoria = MemoriaMongo(config.mongodb_uri) if config.mongodb_uri else MemoriaEnProceso()
-    return ServicioChatGeneral(GeminiProvider(config), memoria)
+    return ServicioChatGeneral(
+        GeminiProvider(config),
+        memoria,
+        extractor_docx=ExtractorDocx(),
+        extractor_xlsx=ExtractorXlsx(),
+    )

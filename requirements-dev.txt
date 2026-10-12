@@ -6,3 +6,6 @@ ruff==0.13.0
 pytest==8.4.2
 pytest-asyncio==1.2.0
 httpx==0.28.1
+
+# Stubs de tipos para mypy --strict (openpyxl no publica py.typed).
+types-openpyxl==3.1.5.20260827

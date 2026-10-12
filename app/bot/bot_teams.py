@@ -16,7 +16,7 @@ from microsoft_teams.api import MessageActivity, MessageActivityInput, TypingAct
 from microsoft_teams.apps import ActivityContext, App
 from microsoft_teams.apps.http.fastapi_adapter import FastAPIAdapter
 
-from app.bot.descarga_adjuntos import descargar_imagenes, tiene_imagenes
+from app.bot.descarga_adjuntos import descargar_adjuntos, tiene_adjuntos
 from app.bot.tarjeta_agenda import tarjeta_agenda
 from app.composicion import (
     servicio_chat_general,
@@ -48,7 +48,8 @@ AYUDA = (
     "**Brújula** — te ubica entre tus pendientes.\n\n"
     "- **`semana`** — qué tienes en los próximos 7 días\n"
     "- **`recuérdame <texto> [el viernes]`** — anota un pendiente propio\n"
-    "- **`chat <pregunta>`** — conversación general con memoria; también puedes enviar imágenes\n"
+    "- **`chat <pregunta>`** — conversación general con memoria; también puedes "
+    "enviar imágenes, PDF, Word (.docx) y Excel (.xlsx)\n"
     "- **`olvidar`** — borra la memoria de tu conversación\n"
     "- **`conectar`** — autoriza a Brújula a leer tu calendario real\n"
     "- **`desconectar`** — revoca esa autorización\n"
@@ -132,13 +133,25 @@ def crear_bot_teams(
     peticiones seria un servicio cacheado con el token de alguien -- la
     fuga de datos que se evito en F3.
     """
+
+    es_local = config.brujula_entorno == "local"
+    sin_credenciales = not config.teams_bot_id
+
+    if sin_credenciales and not es_local:
+        # Fallar CERRADO: un secreto ausente en produccion no se degrada a
+        # "acepto cualquier peticion", se degrada a "no arranco".
+        raise RuntimeError(
+            "TEAMS_BOT_ID es obligatorio cuando BRUJULA_ENTORNO no es 'local'. "
+            "Sin el, /api/messages aceptaria actividades no autenticadas."
+        )
+
     bot = App(
         http_server_adapter=FastAPIAdapter(app=nucleo),
         messaging_endpoint="/api/messages",
         client_id=config.teams_bot_id or None,
         client_secret=config.teams_bot_password or None,
         tenant_id=config.azure_tenant_id or None,
-        dangerously_allow_unauthenticated_requests=not config.teams_bot_id,
+        dangerously_allow_unauthenticated_requests=sin_credenciales and es_local,
         default_connection_name=config.teams_oauth_connection,
     )
 
@@ -151,7 +164,7 @@ def crear_bot_teams(
         """Convierte adjuntos de Teams y delega el contenido al caso de uso."""
         await ctx.reply(TypingActivityInput())
         try:
-            imagenes = await descargar_imagenes(
+            adjuntos = await descargar_adjuntos(
                 getattr(ctx.activity, "attachments", None) or [], config
             )
             pregunta = PATRON_CHAT.sub("", ctx.activity.text or "", count=1)
@@ -161,7 +174,7 @@ def crear_bot_teams(
                 ctx.activity.conversation.id,
                 pregunta,
                 datetime.now(UTC),
-                imagenes,
+                adjuntos,
             )
         except (AdjuntoNoSoportadoError, ValueError) as error:
             await ctx.send(str(error))
@@ -170,7 +183,7 @@ def crear_bot_teams(
 
     @bot.on_message_pattern(PATRON_AGENDA)
     async def responder_agenda(ctx: ActivityContext[MessageActivity]) -> None:
-        if tiene_imagenes(getattr(ctx.activity, "attachments", None) or []):
+        if tiene_adjuntos(getattr(ctx.activity, "attachments", None) or []):
             await responder_chat(ctx)
             return
         await ctx.reply(TypingActivityInput())
@@ -256,7 +269,7 @@ def crear_bot_teams(
         """
         mensaje = ctx.activity.text or ""
         attachments = getattr(ctx.activity, "attachments", None) or []
-        if PATRON_CHAT.match(mensaje) or tiene_imagenes(attachments):
+        if PATRON_CHAT.match(mensaje) or tiene_adjuntos(attachments):
             await responder_chat(ctx)
             return
 
