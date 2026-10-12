@@ -70,11 +70,11 @@ class GeminiProvider:
     async def generar_con_adjuntos(
         self, instruccion: str, contexto: str, adjuntos: Sequence[Adjunto]
     ) -> str:
-        """Envía imágenes a Gemini sin alterar el puerto de texto de la agenda."""
+        """Envía imágenes y PDF a Gemini sin alterar el puerto de texto de la agenda."""
         entrada = [
             *(
                 {
-                    "type": "image",
+                    "type": "image" if adjunto.mime.startswith("image/") else "document",
                     "data": base64.b64encode(adjunto.datos).decode("ascii"),
                     "mime_type": adjunto.mime,
                 }

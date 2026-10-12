@@ -16,7 +16,7 @@ from microsoft_teams.api import MessageActivity, MessageActivityInput, TypingAct
 from microsoft_teams.apps import ActivityContext, App
 from microsoft_teams.apps.http.fastapi_adapter import FastAPIAdapter
 
-from app.bot.descarga_adjuntos import descargar_imagenes, tiene_imagenes
+from app.bot.descarga_adjuntos import descargar_adjuntos, tiene_adjuntos
 from app.bot.tarjeta_agenda import tarjeta_agenda
 from app.composicion import (
     servicio_chat_general,
@@ -48,7 +48,8 @@ AYUDA = (
     "**Brújula** — te ubica entre tus pendientes.\n\n"
     "- **`semana`** — qué tienes en los próximos 7 días\n"
     "- **`recuérdame <texto> [el viernes]`** — anota un pendiente propio\n"
-    "- **`chat <pregunta>`** — conversación general con memoria; también puedes enviar imágenes\n"
+    "- **`chat <pregunta>`** — conversación general con memoria; también puedes "
+    "enviar imágenes, PDF, Word (.docx) y Excel (.xlsx)\n"
     "- **`olvidar`** — borra la memoria de tu conversación\n"
     "- **`conectar`** — autoriza a Brújula a leer tu calendario real\n"
     "- **`desconectar`** — revoca esa autorización\n"
@@ -163,7 +164,7 @@ def crear_bot_teams(
         """Convierte adjuntos de Teams y delega el contenido al caso de uso."""
         await ctx.reply(TypingActivityInput())
         try:
-            imagenes = await descargar_imagenes(
+            adjuntos = await descargar_adjuntos(
                 getattr(ctx.activity, "attachments", None) or [], config
             )
             pregunta = PATRON_CHAT.sub("", ctx.activity.text or "", count=1)
@@ -173,7 +174,7 @@ def crear_bot_teams(
                 ctx.activity.conversation.id,
                 pregunta,
                 datetime.now(UTC),
-                imagenes,
+                adjuntos,
             )
         except (AdjuntoNoSoportadoError, ValueError) as error:
             await ctx.send(str(error))
@@ -182,7 +183,7 @@ def crear_bot_teams(
 
     @bot.on_message_pattern(PATRON_AGENDA)
     async def responder_agenda(ctx: ActivityContext[MessageActivity]) -> None:
-        if tiene_imagenes(getattr(ctx.activity, "attachments", None) or []):
+        if tiene_adjuntos(getattr(ctx.activity, "attachments", None) or []):
             await responder_chat(ctx)
             return
         await ctx.reply(TypingActivityInput())
@@ -268,7 +269,7 @@ def crear_bot_teams(
         """
         mensaje = ctx.activity.text or ""
         attachments = getattr(ctx.activity, "attachments", None) or []
-        if PATRON_CHAT.match(mensaje) or tiene_imagenes(attachments):
+        if PATRON_CHAT.match(mensaje) or tiene_adjuntos(attachments):
             await responder_chat(ctx)
             return
 

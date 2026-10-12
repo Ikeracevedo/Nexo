@@ -19,3 +19,7 @@ pymongo==4.18.2
 
 # Descarga de imágenes entregadas por Teams (dependencia directa del canal).
 httpx==0.28.1
+
+# Lectura de Word (.docx) y Excel (.xlsx) enviados al chat (trabajo de Julian Gomez).
+openpyxl==3.1.5
+python-docx==1.2.0
