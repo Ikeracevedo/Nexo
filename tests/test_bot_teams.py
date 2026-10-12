@@ -65,15 +65,19 @@ def _p(id_: str, confianza: float = 1.0) -> Pendiente:
 # --- Enrutamiento de intencion ----------------------------------------
 
 
-def test_reconoce_las_formas_de_pedir_la_agenda() -> None:
+def test_reconoce_las_formas_cortas_de_pedir_la_tarjeta() -> None:
+    for frase in ["semana", "¿qué tengo?", "que tengo", "PENDIENTES", "mi agenda"]:
+        assert PATRON_AGENDA.match(frase), f"No reconocio: {frase!r}"
+
+
+def test_las_preguntas_naturales_van_a_la_ia_no_a_la_tarjeta() -> None:
     for frase in [
-        "semana",
+        "¿qué tengo para hacer hoy?",
+        "qué hay para hoy",
+        "¿tengo algo el viernes?",
         "¿qué tengo esta semana?",
-        "que tengo pendiente",
-        "muéstrame mi agenda",
-        "PENDIENTES",
     ]:
-        assert PATRON_AGENDA.search(frase), f"No reconocio: {frase!r}"
+        assert not PATRON_AGENDA.match(frase), f"Deberia ir a la IA: {frase!r}"
 
 
 def test_no_confunde_saludos_con_peticiones_de_agenda() -> None:

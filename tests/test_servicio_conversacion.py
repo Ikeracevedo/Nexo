@@ -7,6 +7,7 @@ completo de una pregunta libre sin secretos y sin gastar cuota.
 from __future__ import annotations
 
 from datetime import UTC, datetime, timedelta
+from zoneinfo import ZoneInfo
 
 from app.adaptadores.fake_llm import FakeLLMProvider
 from app.dominio.agenda import Agenda, FuenteFallida
@@ -18,6 +19,7 @@ from app.servicios.servicio_conversacion import (
 )
 
 AHORA = datetime(2026, 9, 23, 10, 0, tzinfo=UTC)
+BOGOTA = ZoneInfo("America/Bogota")
 
 
 def _p(titulo: str, dias: int | None = 2, confianza: float = 1.0) -> Pendiente:
@@ -153,3 +155,46 @@ async def test_una_respuesta_vacia_del_modelo_tambien_se_degrada() -> None:
     )
     assert r.texto == SIN_RESPUESTA
     assert r.degradada is True
+
+
+# --- Validaciones de zona horaria
+
+
+async def test_hoy_se_calcula_en_la_zona_del_usuario_no_en_utc() -> None:
+    """23:30 en Bogota del 23 es 04:30 UTC del 24. 'Hoy' debe seguir siendo el 23."""
+    tarde = datetime(2026, 9, 24, 4, 30, tzinfo=UTC)
+    llm = FakeLLMProvider()
+    await ServicioConversacion(llm, BOGOTA).responder("¿qué tengo hoy?", _agenda(), tarde)
+    assert "FECHA DE HOY: 2026-09-23" in (llm.ultimo_contexto or "")
+
+
+async def test_la_fecha_de_vencimiento_tambien_se_muestra_en_la_zona_del_usuario() -> None:
+    """Vence a las 02:00 UTC del 24 = 21:00 del 23 en Bogota."""
+    vence = datetime(2026, 9, 24, 2, 0, tzinfo=UTC)
+    p = Pendiente(
+        id="p1",
+        titulo="Entrega",
+        fuente=FuentePendiente.CALENDARIO,
+        url_origen="https://x.example/1",
+        vence=vence,
+    )
+    llm = FakeLLMProvider()
+    await ServicioConversacion(llm, BOGOTA).responder("¿qué tengo hoy?", _agenda(p), AHORA)
+    assert "vence: 2026-09-23" in (llm.ultimo_contexto or "")
+
+
+async def test_el_modelo_distingue_lo_anotado_por_el_usuario_de_lo_de_microsoft() -> None:
+    llm = FakeLLMProvider()
+    propio = Pendiente(
+        id="p1",
+        titulo="Llamar al banco",
+        fuente=FuentePendiente.PROPIO,
+        url_origen="https://brujula.example/bot",
+        vence=AHORA,
+    )
+    await ServicioConversacion(llm).responder(
+        "¿qué tengo hoy?", _agenda(propio, _p("Parcial")), AHORA
+    )
+    ctx = llm.ultimo_contexto or ""
+    assert "anotado por el usuario en Brujula" in ctx
+    assert "calendario de Microsoft 365" in ctx

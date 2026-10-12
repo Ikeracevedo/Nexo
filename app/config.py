@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import re
 from functools import lru_cache
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from pydantic import ValidationInfo, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -19,6 +20,7 @@ class Configuracion(BaseSettings):
 
     brujula_entorno: str = "local"
     brujula_log_level: str = "INFO"
+    brujula_zona_horaria: str = "America/Bogota"
 
     azure_tenant_id: str = ""
     azure_client_id: str = ""
@@ -51,6 +53,15 @@ class Configuracion(BaseSettings):
                 f"{info.field_name} no tiene forma de GUID ({len(v)} caracteres; "
                 f"un GUID tiene 36). Revisa que lo copiaste completo desde el portal."
             )
+        return v
+
+    @field_validator("brujula_zona_horaria")
+    @classmethod
+    def _debe_ser_zona_iana(cls, v: str) -> str:
+        try:
+            ZoneInfo(v)
+        except (ZoneInfoNotFoundError, ValueError) as error:
+            raise ValueError(f"brujula_zona_horaria '{v}' no es una zona IANA valida") from error
         return v
 
 

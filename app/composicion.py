@@ -18,6 +18,7 @@ SU token. El servicio pasa a construirse por peticion.
 from __future__ import annotations
 
 from typing import Any
+from zoneinfo import ZoneInfo
 
 from app.adaptadores.extractor_docx import ExtractorDocx
 from app.adaptadores.extractor_xlsx import ExtractorXlsx
@@ -90,7 +91,7 @@ def proveedor_llm(config: Configuracion) -> LLMProvider:
 
 def servicio_conversacion(config: Configuracion) -> ServicioConversacion:
     """El caso de uso de conversacion, con su proveedor ya inyectado."""
-    return ServicioConversacion(proveedor_llm(config))
+    return ServicioConversacion(proveedor_llm(config), ZoneInfo(config.brujula_zona_horaria))
 
 
 def servicio_chat_general(config: Configuracion) -> ServicioChatGeneral:
