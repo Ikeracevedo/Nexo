@@ -14,6 +14,11 @@ from app.dominio.conversacion import MemoriaNoDisponibleError, Turno
 
 logger = logging.getLogger(__name__)
 
+# Por defecto pymongo espera 30 s antes de rendirse si no alcanza el servidor, y el
+# bot esperaba ese tiempo en CADA mensaje mientras Atlas rechazaba la IP de la VM.
+# 5 s: suficiente para una red sana, y un Mongo caido se nota rapido y degrada.
+TIMEOUT_SELECCION_MS = 5000
+
 
 class MemoriaMongo:
     def __init__(
@@ -43,7 +48,12 @@ class MemoriaMongo:
         if self._cliente is None:
             from pymongo import AsyncMongoClient
 
-            self._cliente = AsyncMongoClient(self._uri, tz_aware=True)
+            self._cliente = AsyncMongoClient(
+                self._uri,
+                tz_aware=True,
+                serverSelectionTimeoutMS=TIMEOUT_SELECCION_MS,
+                connectTimeoutMS=TIMEOUT_SELECCION_MS,
+            )
         return self._cliente[self._base][self._nombre_coleccion]
 
     async def _asegurar_indices(self, col: Any) -> None:
