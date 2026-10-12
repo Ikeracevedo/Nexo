@@ -37,3 +37,8 @@ def test_el_mensaje_de_error_dice_cuantos_caracteres_hay() -> None:
     with pytest.raises(ValidationError) as e:
         Configuracion(azure_tenant_id=GUID_VALIDO[1:])
     assert "35" in str(e.value) and "36" in str(e.value)
+
+
+def test_una_zona_horaria_invalida_se_rechaza() -> None:
+    with pytest.raises(ValueError, match="zona IANA"):
+        Configuracion(brujula_zona_horaria="Mordor/Barad-dur")

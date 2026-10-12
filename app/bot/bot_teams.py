@@ -31,8 +31,11 @@ from app.servicios.servicio_agenda import ServicioAgenda
 from app.servicios.servicio_chat_general import ServicioChatGeneral
 from app.servicios.servicio_conversacion import ServicioConversacion
 
+# Solo las formas CORTAS de pedir la tarjeta. Cualquier frase mas larga
+# ("que tengo para hacer hoy") va a la IA, que razona sobre la agenda real.
 PATRON_AGENDA = re.compile(
-    r"^(?!\s*chat\b).*\b(semana|pendientes|qu[eé]\s+tengo|agenda)\b", re.IGNORECASE
+    r"^\s*¿?\s*(semana|mi\s+semana|pendientes|agenda|mi\s+agenda|qu[eé]\s+tengo)\s*\??\s*$",
+    re.IGNORECASE,
 )
 PATRON_AYUDA = re.compile(r"^\s*(hola|ayuda|help|men[uú]|\?)\s*$", re.IGNORECASE)
 PATRON_CONECTAR = re.compile(
