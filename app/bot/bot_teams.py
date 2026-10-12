@@ -118,10 +118,14 @@ def _usuario_id(ctx: ActivityContext) -> str:
     """AAD Object ID del usuario. Se prefiere sobre el ID de canal de Teams.
 
     aad_object_id es el GUID de Entra ID (el que se usa como clave en Mongo).
-    Si no esta disponible se usa from_property.id como fallback.
+    Si no esta disponible se usa from_.id como fallback.
+
+    El campo del SDK se llama `from_` (con guion bajo, porque `from` es palabra
+    reservada de Python). Con `from_property` fallaba con AttributeError y
+    rompia `chat`, `semana` y `recuerdame` en produccion.
     """
-    from_prop = ctx.activity.from_property
-    return (getattr(from_prop, "aad_object_id", None) or getattr(from_prop, "id", "") or "").strip()
+    remitente = ctx.activity.from_
+    return (getattr(remitente, "aad_object_id", None) or getattr(remitente, "id", "") or "").strip()
 
 
 def crear_bot_teams(

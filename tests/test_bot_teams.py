@@ -9,15 +9,20 @@ cubre casi todo el canal, la capa es delgada de verdad.
 from __future__ import annotations
 
 from datetime import datetime, timedelta
+from types import SimpleNamespace
+from typing import Any
 
 import pytest
 from fastapi import FastAPI
+from microsoft_teams.api import MessageActivity
+from microsoft_teams.api.models.account import Account, ConversationAccount
 
 from app.bot.bot_teams import (
     PATRON_AGENDA,
     PATRON_AYUDA,
     PATRON_CHAT,
     PATRON_RECUERDAME,
+    _usuario_id,
     construir_respuesta_agenda,
     crear_bot_teams,
 )
@@ -161,3 +166,30 @@ def test_sin_bot_id_en_local_si_arranca() -> None:
 def test_con_bot_id_en_produccion_si_arranca() -> None:
     config = Configuracion(brujula_entorno="produccion", teams_bot_id=GUID_BOT)
     crear_bot_teams(FastAPI(), config)
+
+
+# --- Identidad del usuario ----------------------------------------------
+
+
+def _ctx_con_remitente(remitente: Account) -> Any:
+    """Un ctx minimo con una actividad REAL del SDK: si el SDK renombra el
+    campo, este test falla aqui y no en produccion (donde costo un 500)."""
+    actividad = MessageActivity(
+        from_=remitente,
+        conversation=ConversationAccount(id="c1", conversation_type="personal"),
+        id="1",
+        recipient=Account(id="bot"),
+        text="hola",
+    )
+    return SimpleNamespace(activity=actividad)
+
+
+def test_el_usuario_se_identifica_por_su_aad_object_id() -> None:
+    ctx = _ctx_con_remitente(
+        Account(id="29:abc", aad_object_id="11111111-2222-3333-4444-555555555555")
+    )
+    assert _usuario_id(ctx) == "11111111-2222-3333-4444-555555555555"
+
+
+def test_sin_aad_object_id_se_usa_el_id_del_canal() -> None:
+    assert _usuario_id(_ctx_con_remitente(Account(id="29:abc"))) == "29:abc"
