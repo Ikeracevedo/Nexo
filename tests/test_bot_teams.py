@@ -10,13 +10,18 @@ from __future__ import annotations
 
 from datetime import datetime, timedelta
 
+import pytest
+from fastapi import FastAPI
+
 from app.bot.bot_teams import (
     PATRON_AGENDA,
     PATRON_AYUDA,
     PATRON_CHAT,
     PATRON_RECUERDAME,
     construir_respuesta_agenda,
+    crear_bot_teams,
 )
+from app.config import Configuracion
 from app.dominio.errores import FuenteNoDisponibleError
 from app.dominio.pendiente import FuentePendiente, Pendiente
 from app.servicios.servicio_agenda import ServicioAgenda
@@ -131,3 +136,24 @@ async def test_sin_pendientes_y_sin_fallos_no_inventa_una_advertencia() -> None:
     texto = str(mensaje.model_dump(exclude_none=True))
     assert "No tienes pendientes" in texto
     assert "No pude consultar" not in texto
+
+
+GUID_BOT = "11111111-2222-3333-4444-555555555555"
+
+
+def test_sin_bot_id_en_produccion_la_app_no_arranca() -> None:
+    """Fallar cerrado: un secreto ausente no abre /api/messages, tumba el arranque."""
+    config = Configuracion(brujula_entorno="produccion", teams_bot_id="")
+    with pytest.raises(RuntimeError, match="TEAMS_BOT_ID"):
+        crear_bot_teams(FastAPI(), config)
+
+
+def test_sin_bot_id_en_local_si_arranca() -> None:
+    """En local el modo sin autenticar es cómodo y está permitido."""
+    config = Configuracion(brujula_entorno="local", teams_bot_id="")
+    crear_bot_teams(FastAPI(), config)
+
+
+def test_con_bot_id_en_produccion_si_arranca() -> None:
+    config = Configuracion(brujula_entorno="produccion", teams_bot_id=GUID_BOT)
+    crear_bot_teams(FastAPI(), config)

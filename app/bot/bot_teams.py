@@ -132,13 +132,25 @@ def crear_bot_teams(
     peticiones seria un servicio cacheado con el token de alguien -- la
     fuga de datos que se evito en F3.
     """
+
+    es_local = config.brujula_entorno == "local"
+    sin_credenciales = not config.teams_bot_id
+
+    if sin_credenciales and not es_local:
+        # Fallar CERRADO: un secreto ausente en produccion no se degrada a
+        # "acepto cualquier peticion", se degrada a "no arranco".
+        raise RuntimeError(
+            "TEAMS_BOT_ID es obligatorio cuando BRUJULA_ENTORNO no es 'local'. "
+            "Sin el, /api/messages aceptaria actividades no autenticadas."
+        )
+
     bot = App(
         http_server_adapter=FastAPIAdapter(app=nucleo),
         messaging_endpoint="/api/messages",
         client_id=config.teams_bot_id or None,
         client_secret=config.teams_bot_password or None,
         tenant_id=config.azure_tenant_id or None,
-        dangerously_allow_unauthenticated_requests=not config.teams_bot_id,
+        dangerously_allow_unauthenticated_requests=sin_credenciales and es_local,
         default_connection_name=config.teams_oauth_connection,
     )
 
