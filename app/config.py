@@ -22,6 +22,10 @@ class Configuracion(BaseSettings):
     brujula_log_level: str = "INFO"
     brujula_zona_horaria: str = "America/Bogota"
 
+    # Marca del asistente. Todo texto que el usuario lee (ayuda, tarjetas,
+    # prompts) sale de aqui: renombrarlo es una variable, no un commit.
+    bot_nombre: str = "Nexo"
+
     azure_tenant_id: str = ""
     azure_client_id: str = ""
     azure_client_secret: str = ""

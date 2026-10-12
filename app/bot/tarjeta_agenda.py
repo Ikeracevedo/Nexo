@@ -42,7 +42,7 @@ def _texto_fecha(vence: datetime | None, ahora: datetime) -> str:
     return f"{vence.strftime('%d/%m %H:%M')} ({relativo})"
 
 
-def _bloque_pendiente(p: Pendiente, ahora: datetime) -> Container:
+def _bloque_pendiente(p: Pendiente, ahora: datetime, nombre: str) -> Container:
     """Un pendiente. El contraste visual ES la tesis del proyecto."""
     hechos = [
         Fact(title="Fuente", value=_ETIQUETA_FUENTE[p.fuente]),
@@ -69,7 +69,7 @@ def _bloque_pendiente(p: Pendiente, ahora: datetime) -> Container:
     if p.es_inferido:
         items.append(
             TextBlock(
-                text="Brújula no confirma este pendiente. Verifícalo en el origen.",
+                text=f"{nombre} no confirma este pendiente. Verifícalo en el origen.",
                 wrap=True,
                 size="Small",
                 color="Warning",
@@ -143,7 +143,7 @@ def _encabezado(agenda: Agenda) -> list[CardElement]:
     ]
 
 
-def tarjeta_agenda(agenda: Agenda, ahora: datetime) -> AdaptiveCard:
+def tarjeta_agenda(agenda: Agenda, ahora: datetime, nombre: str = "Nexo") -> AdaptiveCard:
     """Construye la tarjeta de "¿que tengo esta semana?".
 
     `ahora` se recibe como parametro y no se lee del reloj, por el mismo
@@ -164,7 +164,7 @@ def tarjeta_agenda(agenda: Agenda, ahora: datetime) -> AdaptiveCard:
             )
         )
 
-    cuerpo += [_bloque_pendiente(p, ahora) for p in agenda.pendientes]
+    cuerpo += [_bloque_pendiente(p, ahora, nombre) for p in agenda.pendientes]
 
     cuerpo.append(
         TextBlock(

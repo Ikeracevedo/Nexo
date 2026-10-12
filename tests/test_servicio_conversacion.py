@@ -157,6 +157,13 @@ async def test_una_respuesta_vacia_del_modelo_tambien_se_degrada() -> None:
     assert r.degradada is True
 
 
+async def test_el_nombre_del_asistente_viaja_en_la_instruccion() -> None:
+    llm = FakeLLMProvider()
+    await ServicioConversacion(llm, nombre="Atlas").responder("¿qué tengo?", _agenda(), AHORA)
+    assert "Eres Atlas" in (llm.ultima_instruccion or "")
+    assert "NUNCA inventes" in (llm.ultima_instruccion or "")
+
+
 # --- Validaciones de zona horaria
 
 

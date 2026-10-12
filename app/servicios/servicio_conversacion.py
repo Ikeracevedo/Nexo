@@ -30,8 +30,20 @@ from app.puertos.llm_provider import LLMProvider
 
 logger = logging.getLogger(__name__)
 
-INSTRUCCION = """Eres Brujula, un asistente que ayuda a una persona a entender sus
-propios pendientes de Microsoft 365.
+FUERA_DE_ALCANCE = "Solo puedo ayudarte con tus pendientes. Escribe `semana` para verlos."
+
+_INSTRUCCION = """Eres {nombre}, el asistente que le ayuda a una persona a tener todo
+organizado y centrado en un mismo lugar dentro de Microsoft Teams. Esa persona
+puede ser estudiante, profesor o profesional: no asumas cual, adaptate a lo que
+muestran sus pendientes.
+
+ACTITUD:
+- Calido, positivo y cercano, como un companero de equipo que siempre esta pendiente.
+  Tutea. Anima sin exagerar: nada de frases vacias ni sermones.
+- Proactivo: ademas de responder, señala lo que mas importa (que vence primero,
+  que se cruza con otra cosa) y propone UN siguiente paso concreto.
+- Si la persona se ve sobrecargada, ayudale a priorizar en vez de listar todo.
+- Si no tiene pendientes, celebralo con naturalidad y sin inventar tareas.
 
 REGLAS QUE NO PUEDES ROMPER:
 1. Responde UNICAMENTE con la informacion de la lista de pendientes que te doy
@@ -50,9 +62,14 @@ REGLAS QUE NO PUEDES ROMPER:
 6. Responde en espanol, en menos de 80 palabras, sin markdown complejo.
 7. Si mencionas un pendiente, usa su titulo tal como aparece en la lista.
 8. Cada pendiente indica su origen. Los "anotados por el usuario" los escribio
-   la propia persona; los demas vienen de Microsoft 365. Distinguelos si ayuda."""
+   la propia persona; los demas vienen de Microsoft 365. Distinguelos si ayuda.
+9. Los pendientes marcados como "inferido de una conversacion" no estan
+   confirmados: si los mencionas, dile que los verifique en su origen."""
 
-FUERA_DE_ALCANCE = "Solo puedo ayudarte con tus pendientes. Escribe `semana` para verlos."
+
+def construir_instruccion(nombre: str) -> str:
+    return _INSTRUCCION.format(nombre=nombre)
+
 
 SIN_RESPUESTA = (
     "No pude generar una respuesta en este momento. "
@@ -71,9 +88,10 @@ _ORIGEN: dict[FuentePendiente, str] = {
 class ServicioConversacion:
     """Convierte una pregunta libre en una respuesta acotada a la agenda."""
 
-    def __init__(self, llm: LLMProvider, zona: tzinfo = UTC) -> None:
+    def __init__(self, llm: LLMProvider, zona: tzinfo = UTC, nombre: str = "Nexo") -> None:
         self._llm = llm
         self._zona = zona
+        self._instruccion = construir_instruccion(nombre)
 
     async def responder(
         self,
@@ -88,7 +106,7 @@ class ServicioConversacion:
         contexto = self._serializar(pregunta, agenda, ahora, self._zona)
 
         try:
-            texto = await self._llm.generar(INSTRUCCION, contexto)
+            texto = await self._llm.generar(self._instruccion, contexto)
         except LLMNoDisponibleError as e:
             # Fallo PREVISTO del proveedor: se degrada con honestidad.
             logger.warning("LLM no disponible (%s): %s", e.proveedor, e.motivo)

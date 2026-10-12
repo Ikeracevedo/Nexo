@@ -91,7 +91,9 @@ def proveedor_llm(config: Configuracion) -> LLMProvider:
 
 def servicio_conversacion(config: Configuracion) -> ServicioConversacion:
     """El caso de uso de conversacion, con su proveedor ya inyectado."""
-    return ServicioConversacion(proveedor_llm(config), ZoneInfo(config.brujula_zona_horaria))
+    return ServicioConversacion(
+        proveedor_llm(config), ZoneInfo(config.brujula_zona_horaria), config.bot_nombre
+    )
 
 
 def servicio_chat_general(config: Configuracion) -> ServicioChatGeneral:
@@ -102,4 +104,5 @@ def servicio_chat_general(config: Configuracion) -> ServicioChatGeneral:
         memoria,
         extractor_docx=ExtractorDocx(),
         extractor_xlsx=ExtractorXlsx(),
+        nombre=config.bot_nombre,
     )

@@ -29,7 +29,7 @@ def crear_app() -> FastAPI:
         yield
 
     nucleo = FastAPI(
-        title="Brujula",
+        title=config.bot_nombre,
         version=VERSION,
         description=(
             "Unifica pendientes dispersos de Microsoft 365 y los devuelve con enlace a su origen."

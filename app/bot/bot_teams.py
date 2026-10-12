@@ -1,4 +1,4 @@
-"""Canal de Teams: adaptador PRIMARIO sobre el nucleo de Brujula.
+"""Canal de Teams: adaptador PRIMARIO sobre el nucleo del asistente.
 
 CAPA DE BOT DELGADA — regla que no se negocia:
 este modulo traduce mensajes de Teams a llamadas al servicio y respuestas
@@ -47,23 +47,26 @@ PATRON_RECUERDAME = re.compile(r"^\s*rec[uú][eé]rdame\b", re.IGNORECASE)
 PATRON_CHAT = re.compile(r"^\s*chat\b\s*", re.IGNORECASE)
 PATRON_OLVIDAR = re.compile(r"^\s*olvidar\s*$", re.IGNORECASE)
 
-AYUDA = (
-    "**Brújula** — te ubica entre tus pendientes.\n\n"
-    "- **`semana`** — qué tienes en los próximos 7 días\n"
-    "- **`recuérdame <texto> [el viernes]`** — anota un pendiente propio\n"
-    "- **`chat <pregunta>`** — conversación general con memoria; también puedes "
-    "enviar imágenes, PDF, Word (.docx) y Excel (.xlsx)\n"
-    "- **`olvidar`** — borra la memoria de tu conversación\n"
-    "- **`conectar`** — autoriza a Brújula a leer tu calendario real\n"
-    "- **`desconectar`** — revoca esa autorización\n"
-    "- **`estado`** — si tus datos son reales o de ejemplo, ahora mismo\n"
-    "- **`ayuda`** — este mensaje\n\n"
-    "_También puedes preguntarme en lenguaje natural **sobre tus pendientes** "
-    "(«¿qué es lo más urgente?», «¿tengo algo el viernes?»). "
-    "Fuera de eso no respondo: no soy un asistente de propósito general._\n\n"
-    "_Cada pendiente trae enlace a su origen. Los que Brújula infirió de una "
-    "conversación salen marcados en amarillo con su nivel de confianza._"
-)
+
+def texto_ayuda(nombre: str) -> str:
+    return (
+        f"**{nombre}** — tu asistente para tenerlo todo organizado en un solo lugar.\n\n"
+        "- **`semana`** — qué tienes en los próximos 7 días\n"
+        "- **`recuérdame <texto> [el viernes]`** — anota un pendiente propio\n"
+        "- **`chat <pregunta>`** — conversación general con memoria; también puedes "
+        "enviar imágenes, PDF, Word (.docx) y Excel (.xlsx)\n"
+        "- **`olvidar`** — borra la memoria de tu conversación\n"
+        f"- **`conectar`** — autoriza a {nombre} a leer tu calendario y tus tareas reales\n"
+        "- **`desconectar`** — revoca esa autorización\n"
+        "- **`estado`** — si tus datos son reales o de ejemplo, ahora mismo\n"
+        "- **`ayuda`** — este mensaje\n\n"
+        "_También puedes preguntarme en lenguaje natural **sobre tus pendientes** "
+        "(«¿qué es lo más urgente?», «¿tengo algo el viernes?»). "
+        "Fuera de eso, escribe `chat` antes de tu pregunta._\n\n"
+        f"_Cada pendiente trae enlace a su origen. Los que {nombre} infirió de una "
+        "conversación salen marcados en amarillo con su nivel de confianza._"
+    )
+
 
 NECESITO_PERMISO = (
     "Para mostrarte tus pendientes reales necesito tu autorización. "
@@ -74,6 +77,7 @@ NECESITO_PERMISO = (
 async def construir_respuesta_agenda(
     servicio: ServicioAgenda,
     ahora: datetime,
+    nombre: str = "Nexo",
 ) -> MessageActivityInput:
     """Consulta la agenda y la convierte en el mensaje que ira a Teams.
 
@@ -82,7 +86,7 @@ async def construir_respuesta_agenda(
     que sale de el se prueba con un pytest de 20 milisegundos.
     """
     agenda = await servicio.pendientes_de_la_semana(ahora)
-    return MessageActivityInput().add_card(tarjeta_agenda(agenda, ahora))
+    return MessageActivityInput().add_card(tarjeta_agenda(agenda, ahora, nombre))
 
 
 async def construir_respuesta_libre(
@@ -207,7 +211,9 @@ def crear_bot_teams(
         # ESTE usuario. Nunca cacheado: un servicio cacheado que lleva el
         # token de alguien le serviria sus datos al siguiente que pregunte.
         servicio_usuario = servicio_para_usuario(ctx.user_graph, _usuario_id(ctx), config)
-        await ctx.send(await construir_respuesta_agenda(servicio_usuario, datetime.now(UTC)))
+        await ctx.send(
+            await construir_respuesta_agenda(servicio_usuario, datetime.now(UTC), config.bot_nombre)
+        )
 
     @bot.on_message_pattern(PATRON_CONECTAR)
     async def conectar(ctx: ActivityContext[MessageActivity]) -> None:
@@ -232,7 +238,7 @@ def crear_bot_teams(
 
     @bot.on_message_pattern(PATRON_AYUDA)
     async def responder_ayuda(ctx: ActivityContext[MessageActivity]) -> None:
-        await ctx.send(AYUDA)
+        await ctx.send(texto_ayuda(config.bot_nombre))
 
     @bot.on_message_pattern(PATRON_RECUERDAME)
     async def recuerdame(ctx: ActivityContext[MessageActivity]) -> None:

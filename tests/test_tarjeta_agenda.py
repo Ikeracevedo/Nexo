@@ -68,7 +68,7 @@ def test_un_pendiente_inferido_sale_en_amarillo_y_con_su_porcentaje() -> None:
     t = _texto(tarjeta_agenda(agenda, AHORA))
     assert "72% — inferido" in t
     assert "Warning" in t
-    assert "Brújula no confirma este pendiente" in t
+    assert "Nexo no confirma este pendiente" in t
 
 
 def test_un_pendiente_confirmado_no_lleva_advertencia() -> None:

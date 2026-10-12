@@ -1,0 +1,97 @@
+{
+    "$schema": "https://developer.microsoft.com/en-us/json-schemas/teams/v1.29/MicrosoftTeams.schema.json",
+    "manifestVersion": "1.29",
+    "version": "1.2.0",
+    "id": "25ee9824-3117-4559-a279-8863bbaafd2a",
+    "developer": {
+        "name": "Proyecto en TIC 1, UPB",
+        "websiteUrl": "https://github.com/Ikeracevedo/brujula-teams",
+        "privacyUrl": "https://github.com/Ikeracevedo/brujula-teams/blob/main/docs/PRIVACIDAD.md",
+        "termsOfUseUrl": "https://github.com/Ikeracevedo/brujula-teams/blob/main/docs/TERMINOS.md"
+    },
+    "icons": {
+        "color": "color.png",
+        "outline": "outline.png"
+    },
+    "name": {
+        "short": "Nexo",
+        "full": "Nexo, tu asistente en Teams"
+    },
+    "description": {
+        "short": "Tus pendientes, clases y reuniones en un solo lugar, con buena energía.",
+        "full": "Nexo es el asistente que conecta todo lo que tienes por hacer en Microsoft 365. Reúne tus tareas de Planner y To Do, tu calendario y los compromisos que aparecen en tus conversaciones de Teams, y te dice qué sigue, qué vence pronto y por dónde empezar. Pensado para estudiantes, profesores y profesionales que quieren tenerlo todo organizado y centrado en un mismo lugar. Cada pendiente trae enlace a su origen, y lo que Nexo infiere de una conversación sale marcado para que lo verifiques. También puedes anotarle pendientes propios y charlar con él sobre lo que necesites."
+    },
+    "accentColor": "#3B2F8F",
+    "supportsChannelFeatures": "tier1",
+    "bots": [
+        {
+            "botId": "3e2297bb-fdfc-4f0f-99eb-9389332619f9",
+            "scopes": [
+                "personal",
+                "team",
+                "groupChat"
+            ],
+            "isNotificationOnly": false,
+            "supportsTargetedMessages": false,
+            "supportsCalling": false,
+            "supportsVideo": false,
+            "supportsFiles": true,
+            "commandLists": [
+                {
+                    "scopes": [
+                        "personal",
+                        "team",
+                        "groupChat"
+                    ],
+                    "triggers": [
+                        "mention"
+                    ],
+                    "commands": [
+                        {
+                            "title": "semana",
+                            "description": "Qué tienes en los próximos 7 días"
+                        },
+                        {
+                            "title": "recuérdame",
+                            "description": "Anota un pendiente propio, con fecha si quieres"
+                        },
+                        {
+                            "title": "chat",
+                            "description": "Conversa con Nexo sobre cualquier tema o envíale una imagen"
+                        },
+                        {
+                            "title": "olvidar",
+                            "description": "Borra la memoria de tu conversación"
+                        },
+                        {
+                            "title": "conectar",
+                            "description": "Autoriza a Nexo a leer tu calendario y tus tareas reales"
+                        },
+                        {
+                            "title": "desconectar",
+                            "description": "Revoca esa autorización"
+                        },
+                        {
+                            "title": "estado",
+                            "description": "Si tus datos son reales o de ejemplo, ahora mismo"
+                        },
+                        {
+                            "title": "ayuda",
+                            "description": "Ver qué sabe hacer Nexo"
+                        }
+                    ]
+                }
+            ]
+        }
+    ],
+    "composeExtensions": [],
+    "configurableTabs": [],
+    "staticTabs": [],
+    "permissions": [
+        "identity",
+        "messageTeamMembers"
+    ],
+    "validDomains": [
+        "token.botframework.com"
+    ]
+}
