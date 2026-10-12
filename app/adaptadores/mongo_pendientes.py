@@ -33,6 +33,10 @@ logger = logging.getLogger(__name__)
 NOMBRE = "pendientes propios"
 _BD = "brujula"
 _COLECCION = "pendientes"
+# Por defecto pymongo espera 30 s antes de rendirse si no alcanza el servidor, y el
+# bot esperaba ese tiempo en CADA mensaje mientras Atlas rechazaba la IP de la VM.
+# 5 s: suficiente para una red sana, y un Mongo caido se nota rapido y degrada.
+TIMEOUT_SELECCION_MS = 5000
 _URL_FALLBACK = "https://teams.microsoft.com"
 
 
@@ -143,7 +147,11 @@ class FuentePropiaMongo:
         if self._cliente is None:
             from pymongo import AsyncMongoClient  # import perezoso
 
-            self._cliente = AsyncMongoClient(self._uri)
+            self._cliente = AsyncMongoClient(
+                self._uri,
+                serverSelectionTimeoutMS=TIMEOUT_SELECCION_MS,
+                connectTimeoutMS=TIMEOUT_SELECCION_MS,
+            )
         return self._cliente[_BD][_COLECCION]
 
     def _a_pendiente(self, doc: dict[str, Any]) -> Pendiente:
