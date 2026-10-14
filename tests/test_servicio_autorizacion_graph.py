@@ -63,6 +63,9 @@ class _PreferenciasFalsas:
     async def desactivar_vigilancia(self, usuario: str) -> None:
         pass
 
+    async def usuarios_con_vigilancia_activa(self) -> list[str]:
+        return []
+
 
 def _servicio(
     usuario_intercambiado: str = USUARIO,

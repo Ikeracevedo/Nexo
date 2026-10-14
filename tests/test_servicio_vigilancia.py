@@ -27,6 +27,9 @@ class _PreferenciasFalsas:
         self.desactivaciones.append(usuario_id)
         self.activa = False
 
+    async def usuarios_con_vigilancia_activa(self) -> list[str]:
+        return [UID] if self.activa else []
+
 
 class _CredencialesFalsas:
     def __init__(self) -> None:
