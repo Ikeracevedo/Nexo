@@ -115,3 +115,11 @@ class ServicioPendientesPropios:
 
         vence = datetime.combine(fecha, time(0, 0), tzinfo=UTC) if fecha else None
         return await self._repo.guardar(usuario_id, titulo, vence)
+
+    async def completar(self, pendiente_id: str, usuario_id: str) -> bool:
+        """Marca un pendiente propio como completado."""
+        return await self._repo.completar(pendiente_id, usuario_id)
+
+    async def borrar(self, pendiente_id: str, usuario_id: str) -> bool:
+        """Borra definitivamente un pendiente propio."""
+        return await self._repo.borrar(pendiente_id, usuario_id)

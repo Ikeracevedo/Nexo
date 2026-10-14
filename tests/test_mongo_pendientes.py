@@ -20,6 +20,7 @@ from app.adaptadores.mongo_pendientes import FuentePropiaMongo
 from app.config import Configuracion
 from app.dominio.errores import FuenteNoDisponibleError
 from app.dominio.pendiente import FuentePendiente
+from app.servicios.servicio_agenda import ServicioAgenda
 
 AHORA = datetime(2026, 9, 29, 10, 0, tzinfo=UTC)
 LUEGO = AHORA + timedelta(days=7)
@@ -35,6 +36,16 @@ UID_B = "aad-user-b-00000000-0000-0000-0000-000000000002"
 class _InsertResult:
     def __init__(self) -> None:
         self.inserted_id = "507f1f77bcf86cd799439011"
+
+
+class _UpdateResult:
+    def __init__(self, matched_count: int) -> None:
+        self.matched_count = matched_count
+
+
+class _DeleteResult:
+    def __init__(self, deleted_count: int) -> None:
+        self.deleted_count = deleted_count
 
 
 class _FakeCursor:
@@ -56,22 +67,55 @@ class _FakeColeccion:
         docs: list[dict[str, Any]] | None = None,
         error_find: Exception | None = None,
         error_insert: Exception | None = None,
+        matched_count: int = 1,
+        deleted_count: int = 1,
     ) -> None:
         self._docs = docs or []
         self._error_find = error_find
         self._error_insert = error_insert
+        self._matched_count = matched_count
+        self._deleted_count = deleted_count
         self.ultimo_filtro: dict[str, Any] | None = None
         self.ultimo_doc: dict[str, Any] | None = None
+        self.ultimo_filtro_update: dict[str, Any] | None = None
+        self.ultima_actualizacion: dict[str, Any] | None = None
+        self.ultimo_filtro_delete: dict[str, Any] | None = None
 
     def find(self, filtro: dict[str, Any]) -> _FakeCursor:
         self.ultimo_filtro = filtro
-        return _FakeCursor(self._docs, self._error_find)
+        docs = [
+            doc
+            for doc in self._docs
+            if doc["usuario_id"] == filtro["usuario_id"]
+            and doc["completado"] is filtro["completado"]
+        ]
+        return _FakeCursor(docs, self._error_find)
 
     async def insert_one(self, doc: dict[str, Any]) -> _InsertResult:
         if self._error_insert:
             raise self._error_insert
         self.ultimo_doc = doc
         return _InsertResult()
+
+    async def update_one(
+        self,
+        filtro: dict[str, Any],
+        actualizacion: dict[str, Any],
+    ) -> _UpdateResult:
+        self.ultimo_filtro_update = filtro
+        self.ultima_actualizacion = actualizacion
+        if self._matched_count:
+            for doc in self._docs:
+                if (
+                    str(filtro["_id"]) == str(doc["_id"])
+                    and filtro["usuario_id"] == doc["usuario_id"]
+                ):
+                    doc.update(actualizacion["$set"])
+        return _UpdateResult(matched_count=self._matched_count)
+
+    async def delete_one(self, filtro: dict[str, Any]) -> _DeleteResult:
+        self.ultimo_filtro_delete = filtro
+        return _DeleteResult(deleted_count=self._deleted_count)
 
 
 # ---------------------------------------------------------------------------
@@ -88,8 +132,16 @@ def _fuente(
     usuario_id: str = UID_A,
     error_find: Exception | None = None,
     error_insert: Exception | None = None,
+    matched_count: int = 1,
+    deleted_count: int = 1,
 ) -> tuple[FuentePropiaMongo, _FakeColeccion]:
-    col = _FakeColeccion(docs, error_find, error_insert)
+    col = _FakeColeccion(
+        docs,
+        error_find,
+        error_insert,
+        matched_count,
+        deleted_count,
+    )
     fuente = FuentePropiaMongo(_config(), usuario_id, _coleccion=col)
     return fuente, col
 
@@ -208,6 +260,79 @@ async def test_guardar_con_fecha_devuelve_fecha() -> None:
     fuente, _ = _fuente()
     p = await fuente.guardar(UID_A, "Revisar PR", vence)
     assert p.vence == vence
+
+
+async def test_completar_actualiza_solo_el_pendiente_del_usuario() -> None:
+    fuente, col = _fuente()
+
+    completado = await fuente.completar(
+        "propio-507f1f77bcf86cd799439011",
+        UID_A,
+    )
+
+    assert completado is True
+    assert col.ultimo_filtro_update is not None
+    assert col.ultimo_filtro_update["usuario_id"] == UID_A
+    assert col.ultima_actualizacion == {"$set": {"completado": True}}
+
+
+async def test_borrar_elimina_solo_el_pendiente_del_usuario() -> None:
+    fuente, col = _fuente()
+
+    borrado = await fuente.borrar(
+        "propio-507f1f77bcf86cd799439011",
+        UID_A,
+    )
+
+    assert borrado is True
+    assert col.ultimo_filtro_delete is not None
+    assert col.ultimo_filtro_delete["usuario_id"] == UID_A
+
+
+async def test_completar_pendiente_ajeno_devuelve_false() -> None:
+    fuente, _ = _fuente(matched_count=0)
+
+    completado = await fuente.completar(
+        "propio-507f1f77bcf86cd799439011",
+        UID_A,
+    )
+
+    assert completado is False
+
+
+async def test_borrar_pendiente_ajeno_devuelve_false() -> None:
+    fuente, _ = _fuente(deleted_count=0)
+
+    borrado = await fuente.borrar(
+        "propio-507f1f77bcf86cd799439011",
+        UID_A,
+    )
+
+    assert borrado is False
+
+
+async def test_completar_pendiente_inexistente_devuelve_false() -> None:
+    fuente, _ = _fuente(matched_count=0)
+
+    completado = await fuente.completar(
+        "propio-507f1f77bcf86cd799439011",
+        UID_A,
+    )
+
+    assert completado is False
+
+
+async def test_un_pendiente_completado_desaparece_de_semana() -> None:
+    fuente, _ = _fuente(docs=[_doc()])
+    servicio = ServicioAgenda([fuente])
+
+    agenda_antes = await servicio.pendientes_de_la_semana(AHORA)
+    completado = await fuente.completar("propio-507f1f77bcf86cd799439011", UID_A)
+    agenda_despues = await servicio.pendientes_de_la_semana(AHORA)
+
+    assert agenda_antes.total == 1
+    assert completado is True
+    assert agenda_despues.total == 0
 
 
 # ---------------------------------------------------------------------------

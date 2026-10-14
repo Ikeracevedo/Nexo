@@ -47,6 +47,23 @@ def _url_bot(config: Configuracion) -> str:
     return _URL_FALLBACK
 
 
+def _filtro_pendiente_usuario(
+    pendiente_id: str,
+    usuario_id: str,
+) -> dict[str, Any] | None:
+    """Construye un filtro seguro para modificar solo pendientes propios."""
+    from bson import ObjectId
+
+    id_mongo = pendiente_id.removeprefix("propio-")
+    if not usuario_id or not ObjectId.is_valid(id_mongo):
+        return None
+
+    return {
+        "_id": ObjectId(id_mongo),
+        "usuario_id": usuario_id,
+    }
+
+
 class FuentePropiaMongo:
     """Pendientes creados por el usuario dentro de Brujula, en MongoDB.
 
@@ -135,6 +152,41 @@ class FuentePropiaMongo:
             vence=vence,
             confianza=1.0,
         )
+
+    async def completar(self, pendiente_id: str, usuario_id: str) -> bool:
+        filtro = _filtro_pendiente_usuario(pendiente_id, usuario_id)
+        if filtro is None:
+            return False
+
+        col = self._get_coleccion()
+        try:
+            result = await col.update_one(
+                filtro,
+                {"$set": {"completado": True}},
+            )
+        except FuenteNoDisponibleError:
+            raise
+        except Exception as e:
+            logger.exception("Error al completar pendiente en MongoDB: %s", e)
+            raise FuenteNoDisponibleError(NOMBRE, str(e)) from e
+
+        return bool(result.matched_count)
+
+    async def borrar(self, pendiente_id: str, usuario_id: str) -> bool:
+        filtro = _filtro_pendiente_usuario(pendiente_id, usuario_id)
+        if filtro is None:
+            return False
+
+        col = self._get_coleccion()
+        try:
+            result = await col.delete_one(filtro)
+        except FuenteNoDisponibleError:
+            raise
+        except Exception as e:
+            logger.exception("Error al borrar pendiente en MongoDB: %s", e)
+            raise FuenteNoDisponibleError(NOMBRE, str(e)) from e
+
+        return bool(result.deleted_count)
 
     # --- Internos --------------------------------------------------------
 

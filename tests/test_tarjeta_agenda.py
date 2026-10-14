@@ -60,6 +60,32 @@ def test_todo_pendiente_lleva_su_enlace_de_origen() -> None:
     assert t.count("Ver origen") == 2
 
 
+def test_un_pendiente_propio_lleva_acciones_con_su_id_real() -> None:
+    pendiente = Pendiente(
+        id="propio-507f1f77bcf86cd799439011",
+        titulo="Entregar informe",
+        fuente=FuentePendiente.PROPIO,
+        url_origen="https://teams.microsoft.com",
+    )
+    agenda = Agenda(pendientes=(pendiente,), fuentes_consultadas=("pendientes propios",))
+
+    t = _texto(tarjeta_agenda(agenda, AHORA))
+
+    assert "Action.Execute" in t
+    assert "completar_pendiente" in t
+    assert "borrar_pendiente" in t
+    assert pendiente.id in t
+
+
+def test_un_pendiente_externo_no_lleva_acciones_de_edicion() -> None:
+    agenda = Agenda(pendientes=(_p("planner-1"),), fuentes_consultadas=("planner",))
+
+    t = _texto(tarjeta_agenda(agenda, AHORA))
+
+    assert "completar_pendiente" not in t
+    assert "borrar_pendiente" not in t
+
+
 # --- La tesis del proyecto: hecho != inferencia ------------------------
 
 
