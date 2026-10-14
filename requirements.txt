@@ -27,3 +27,6 @@ python-docx==1.2.0
 # Base IANA de zonas horarias. Windows y las imagenes slim no la traen; sin ella
 # ZoneInfo("America/Bogota") falla y graph_todo cae a UTC en silencio.
 tzdata==2026.5
+
+
+cryptography==46.0.3

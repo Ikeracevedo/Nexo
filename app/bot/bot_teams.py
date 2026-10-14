@@ -9,27 +9,45 @@ from __future__ import annotations
 
 import re
 from collections.abc import Sequence
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 
 from fastapi import FastAPI
-from microsoft_teams.api import MessageActivity, MessageActivityInput, TypingActivityInput
+from microsoft_teams.api import (
+    AdaptiveCardActionMessageResponse,
+    AdaptiveCardInvokeActivity,
+    MessageActivity,
+    MessageActivityInput,
+    TypingActivityInput,
+)
 from microsoft_teams.apps import ActivityContext, App
 from microsoft_teams.apps.http.fastapi_adapter import FastAPIAdapter
 
 from app.bot.descarga_adjuntos import descargar_adjuntos, tiene_adjuntos
 from app.bot.tarjeta_agenda import tarjeta_agenda
+from app.bot.tarjeta_sugerencias import tarjeta_sugerencias
 from app.composicion import (
+    servicio_autorizacion_graph,
     servicio_chat_general,
     servicio_conversacion,
     servicio_para_usuario,
     servicio_pendientes_propios_para_usuario,
+    servicio_sugerencias_para_usuario,
+    servicio_vigilancia,
 )
 from app.config import Configuracion
 from app.dominio.adjunto import Adjunto, AdjuntoNoSoportadoError
 from app.dominio.conversacion import MemoriaNoDisponibleError
+from app.dominio.errores import (
+    ConfiguracionInvalidaError,
+    FuenteNoDisponibleError,
+)
+from app.puertos.fuente_mensajes import FuenteMensajes
 from app.servicios.servicio_agenda import ServicioAgenda
 from app.servicios.servicio_chat_general import ServicioChatGeneral
 from app.servicios.servicio_conversacion import ServicioConversacion
+from app.servicios.servicio_deteccion import ServicioDeteccion
+from app.servicios.servicio_pendientes_propios import ServicioPendientesPropios
+from app.servicios.servicio_sugerencias import ServicioSugerencias
 
 # Solo las formas CORTAS de pedir la tarjeta. Cualquier frase mas larga
 # ("que tengo para hacer hoy") va a la IA, que razona sobre la agenda real.
@@ -44,8 +62,11 @@ PATRON_CONECTAR = re.compile(
 PATRON_DESCONECTAR = re.compile(r"^\s*(desconectar|cerrar\s+sesi[oó]n|logout)\s*$", re.IGNORECASE)
 PATRON_ESTADO = re.compile(r"^\s*(estado|status)\s*$", re.IGNORECASE)
 PATRON_RECUERDAME = re.compile(r"^\s*rec[uú][eé]rdame\b", re.IGNORECASE)
+PATRON_VIGILAR = re.compile(r"^\s*vigilar\s*$", re.IGNORECASE)
+PATRON_NO_VIGILAR = re.compile(r"^\s*no\s+vigilar\s*$", re.IGNORECASE)
 PATRON_CHAT = re.compile(r"^\s*chat\b\s*", re.IGNORECASE)
 PATRON_OLVIDAR = re.compile(r"^\s*olvidar\s*$", re.IGNORECASE)
+PATRON_REVISAR = re.compile(r"^\s*revisar\s*$", re.IGNORECASE)
 
 
 def texto_ayuda(nombre: str) -> str:
@@ -53,6 +74,9 @@ def texto_ayuda(nombre: str) -> str:
         f"**{nombre}** — tu asistente para tenerlo todo organizado en un solo lugar.\n\n"
         "- **`semana`** — qué tienes en los próximos 7 días\n"
         "- **`recuérdame <texto> [el viernes]`** — anota un pendiente propio\n"
+        "- **`vigilar`** — activa el análisis de tus chats para proponerte pendientes\n"
+        "- **`revisar`** — muestra posibles pendientes detectados en tus chats\n"
+        "- **`no vigilar`** — apaga ese análisis de conversaciones\n"
         "- **`chat <pregunta>`** — conversación general con memoria; también puedes "
         "enviar imágenes, PDF, Word (.docx) y Excel (.xlsx)\n"
         "- **`olvidar`** — borra la memoria de tu conversación\n"
@@ -116,6 +140,73 @@ async def construir_respuesta_chat(
     """Prueba el chat general sin depender del SDK ni de Teams conectado."""
     respuesta = await chat.responder(usuario_id, conversacion_id, mensaje, ahora, adjuntos)
     return respuesta.texto
+
+
+async def procesar_accion_pendiente(
+    servicio: ServicioPendientesPropios,
+    accion: str,
+    pendiente_id: str,
+    usuario_id: str,
+) -> str:
+    """Ejecuta una accion de tarjeta sobre un pendiente propio."""
+    if accion == "completar_pendiente":
+        encontrado = await servicio.completar(pendiente_id, usuario_id)
+        respuesta_exitosa = "✅ Pendiente marcado como listo."
+    elif accion == "borrar_pendiente":
+        encontrado = await servicio.borrar(pendiente_id, usuario_id)
+        respuesta_exitosa = "🗑️ Pendiente borrado."
+    else:
+        return "No entendí la acción solicitada."
+
+    if not encontrado:
+        return "No encontré ese pendiente. Puede que ya haya cambiado."
+
+    return respuesta_exitosa
+
+
+async def construir_respuesta_revision(
+    fuente: FuenteMensajes,
+    detector: ServicioDeteccion,
+    servicio: ServicioSugerencias,
+    usuario_id: str,
+    ahora: datetime,
+    nombre: str,
+) -> MessageActivityInput:
+    """Analiza mensajes recientes, actualiza la bandeja y la muestra."""
+    mensajes = await fuente.mensajes_recientes(
+        desde=ahora - timedelta(days=7),
+        tope=300,
+    )
+    detectadas = await detector.detectar(mensajes, ahora)
+    await servicio.guardar_detectadas(usuario_id, detectadas, ahora)
+    pendientes = await servicio.pendientes(usuario_id)
+    return MessageActivityInput().add_card(tarjeta_sugerencias(pendientes, ahora, nombre))
+
+
+async def procesar_accion_sugerencia(
+    servicio: ServicioSugerencias,
+    accion: str,
+    sugerencia_id: str,
+    usuario_id: str,
+) -> str:
+    """Ejecuta una acción segura sobre una sugerencia del usuario."""
+    if accion == "aceptar_sugerencia":
+        pendiente = await servicio.aceptar(sugerencia_id, usuario_id)
+        return (
+            f"✅ Añadí «{pendiente.titulo}» a tus pendientes confirmados."
+            if pendiente
+            else "No encontré esa sugerencia. Puede que ya haya cambiado."
+        )
+
+    if accion == "descartar_sugerencia":
+        descartada = await servicio.descartar(sugerencia_id, usuario_id)
+        return (
+            "🗑️ Sugerencia descartada. No volveré a proponértela."
+            if descartada
+            else "No encontré esa sugerencia. Puede que ya haya cambiado."
+        )
+
+    return "No entendí la acción solicitada."
 
 
 def _usuario_id(ctx: ActivityContext) -> str:
@@ -225,7 +316,18 @@ def crear_bot_teams(
     @bot.on_message_pattern(PATRON_DESCONECTAR)
     async def desconectar(ctx: ActivityContext[MessageActivity]) -> None:
         await ctx.sign_out()
-        await ctx.send("Listo, desconecté tu cuenta. Ya no tengo acceso a tus datos reales.")
+        try:
+            await servicio_vigilancia(config).desactivar(_usuario_id(ctx))
+        except (ConfiguracionInvalidaError, FuenteNoDisponibleError):
+            await ctx.send(
+                "Cerré tu sesión de Teams, pero no pude borrar la autorización de vigilancia. "
+                "Escribe `no vigilar` e inténtalo de nuevo."
+            )
+            return
+        await ctx.send(
+            "Listo, desconecté tu cuenta y borré la autorización de vigilancia. "
+            "Ya no tengo acceso renovable a tus datos."
+        )
 
     @bot.on_message_pattern(PATRON_ESTADO)
     async def estado(ctx: ActivityContext[MessageActivity]) -> None:
@@ -235,6 +337,59 @@ def crear_bot_teams(
             await ctx.send("✅ Conectada. `semana` te muestra tus pendientes reales.")
         else:
             await ctx.send("⚪ No conectada. Escribe **`conectar`** para ver tus datos reales.")
+
+    @bot.on_message_pattern(PATRON_VIGILAR)
+    async def vigilar(ctx: ActivityContext[MessageActivity]) -> None:
+        if not ctx.is_signed_in:
+            await ctx.send(NECESITO_PERMISO)
+            await ctx.sign_in()
+            return
+
+        try:
+            enlace = await servicio_autorizacion_graph(config).crear_enlace(
+                _usuario_id(ctx), datetime.now(UTC)
+            )
+        except (ConfiguracionInvalidaError, FuenteNoDisponibleError):
+            await ctx.send("No pude iniciar la conexión para vigilancia. Inténtalo otra vez.")
+            return
+        await ctx.send(
+            "Para activar la vigilancia, autoriza el acceso renovable a tus chats: "
+            f"[conectar mi cuenta]({enlace}). Al terminar volverás a Teams."
+        )
+
+    @bot.on_message_pattern(PATRON_NO_VIGILAR)
+    async def no_vigilar(ctx: ActivityContext[MessageActivity]) -> None:
+        try:
+            mensaje = await servicio_vigilancia(config).desactivar(_usuario_id(ctx))
+        except FuenteNoDisponibleError:
+            await ctx.send("No pude apagar la vigilancia en este momento. Inténtalo otra vez.")
+            return
+        await ctx.send(mensaje)
+
+    @bot.on_message_pattern(PATRON_REVISAR)
+    async def revisar(ctx: ActivityContext[MessageActivity]) -> None:
+        usuario = _usuario_id(ctx)
+        try:
+            activa = await servicio_vigilancia(config).activa(usuario)
+        except FuenteNoDisponibleError:
+            await ctx.send("No pude consultar tu preferencia de vigilancia. Inténtalo otra vez.")
+            return
+
+        if not activa:
+            await ctx.send("La vigilancia está apagada. Escribe `vigilar` para activarla.")
+            return
+
+        try:
+            servicio = servicio_sugerencias_para_usuario(config, usuario)
+            sugerencias = await servicio.pendientes(usuario)
+            respuesta = MessageActivityInput().add_card(
+                tarjeta_sugerencias(sugerencias, datetime.now(UTC), config.bot_nombre)
+            )
+        except FuenteNoDisponibleError:
+            await ctx.send("No pude consultar tus sugerencias en este momento. Inténtalo otra vez.")
+            return
+
+        await ctx.send(respuesta)
 
     @bot.on_message_pattern(PATRON_AYUDA)
     async def responder_ayuda(ctx: ActivityContext[MessageActivity]) -> None:
@@ -261,6 +416,69 @@ def crear_bot_teams(
             await ctx.send(f"✅ Anotado: «{pendiente.titulo}», {fecha_str}.")
         except ValueError as e:
             await ctx.send(f"No entendí el pendiente: {e}")
+
+    async def ejecutar_accion_desde_tarjeta(
+        ctx: ActivityContext[AdaptiveCardInvokeActivity],
+        accion: str,
+    ) -> AdaptiveCardActionMessageResponse:
+        pendiente_id = ctx.activity.value.action.data.get("pendiente_id")
+        if not isinstance(pendiente_id, str):
+            return AdaptiveCardActionMessageResponse(
+                value="No pude identificar el pendiente seleccionado."
+            )
+
+        usuario = _usuario_id(ctx)
+        servicio = servicio_pendientes_propios_para_usuario(config, usuario)
+        respuesta = await procesar_accion_pendiente(
+            servicio,
+            accion,
+            pendiente_id,
+            usuario,
+        )
+        return AdaptiveCardActionMessageResponse(value=respuesta)
+
+    @bot.on_card_action_execute("completar_pendiente")
+    async def completar_desde_tarjeta(
+        ctx: ActivityContext[AdaptiveCardInvokeActivity],
+    ) -> AdaptiveCardActionMessageResponse:
+        return await ejecutar_accion_desde_tarjeta(ctx, "completar_pendiente")
+
+    @bot.on_card_action_execute("borrar_pendiente")
+    async def borrar_desde_tarjeta(
+        ctx: ActivityContext[AdaptiveCardInvokeActivity],
+    ) -> AdaptiveCardActionMessageResponse:
+        return await ejecutar_accion_desde_tarjeta(ctx, "borrar_pendiente")
+
+    async def ejecutar_accion_sugerencia(
+        ctx: ActivityContext[AdaptiveCardInvokeActivity],
+        accion: str,
+    ) -> AdaptiveCardActionMessageResponse:
+        sugerencia_id = ctx.activity.value.action.data.get("sugerencia_id")
+        if not isinstance(sugerencia_id, str):
+            return AdaptiveCardActionMessageResponse(
+                value="No pude identificar la sugerencia seleccionada."
+            )
+
+        usuario = _usuario_id(ctx)
+        respuesta = await procesar_accion_sugerencia(
+            servicio_sugerencias_para_usuario(config, usuario),
+            accion,
+            sugerencia_id,
+            usuario,
+        )
+        return AdaptiveCardActionMessageResponse(value=respuesta)
+
+    @bot.on_card_action_execute("aceptar_sugerencia")
+    async def aceptar_sugerencia_desde_tarjeta(
+        ctx: ActivityContext[AdaptiveCardInvokeActivity],
+    ) -> AdaptiveCardActionMessageResponse:
+        return await ejecutar_accion_sugerencia(ctx, "aceptar_sugerencia")
+
+    @bot.on_card_action_execute("descartar_sugerencia")
+    async def descartar_sugerencia_desde_tarjeta(
+        ctx: ActivityContext[AdaptiveCardInvokeActivity],
+    ) -> AdaptiveCardActionMessageResponse:
+        return await ejecutar_accion_sugerencia(ctx, "descartar_sugerencia")
 
     @bot.on_message_pattern(PATRON_OLVIDAR)
     async def olvidar(ctx: ActivityContext[MessageActivity]) -> None:

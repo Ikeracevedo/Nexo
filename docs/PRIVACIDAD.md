@@ -111,3 +111,19 @@ Para preguntas sobre esta política o sobre tus datos, contacta al desarrollador
 
 **Iker Acevedo** — [ikeracevedowrk@gmail.com](mailto:ikeracevedowrk@gmail.com)
 Repositorio del proyecto: [github.com/Ikeracevedo/brujula-teams](https://github.com/Ikeracevedo/brujula-teams)
+
+---
+
+## 10. Actualización OT-06: vigilancia y precarga
+
+Esta sección prevalece sobre cualquier redacción anterior relativa a tokens de renovación. La
+vigilancia de conversaciones está apagada por defecto. Tras `vigilar`, Brújula obtiene un
+consentimiento OAuth separado para la precarga y almacena el *refresh token* delegado cifrado con
+Fernet en MongoDB Atlas. Nunca almacena contraseñas, tokens en claro ni tokens en logs; el access
+token solo existe en memoria durante la consulta.
+
+El worker procesa únicamente usuarios con vigilancia activa, como máximo cada 30 minutos, con una
+ventana de 7 días y hasta 300 mensajes. Los cuerpos de Teams se mandan a Gemini solo en memoria y
+se descartan al terminar. Se persisten la sugerencia reformulada, su enlace, estado y una huella
+técnica de identificadores/fechas, nunca el cuerpo del mensaje ni el prompt. `no vigilar` elimina
+el refresh token cifrado y detiene la precarga para ese usuario.

@@ -1689,3 +1689,10 @@ Brechas detectadas. **Repasar antes de la sustentación.**
 | R19 | **Sin CI** — el Definition of Done del propio tablero lo exige | 🟠 **Nuevo (13-sep).** `ruff` ha quedado en rojo al entregar **dos OT seguidas**, porque la compuerta depende de que alguien se acuerde. Se cierra en OT-04 F7.1 |
 | R20 | **Paquetes del equipo sin avance desde el 23-ago** (golden dataset de Antonio, ingesta de Julián) | 🟠 **Nuevo (13-sep).** El golden dataset es la respuesta a la pregunta 3 de sustentación. Sin él no hay métrica de calidad |
 | R17 | **`scripts/seed_tenant.py` necesitará permisos de escritura que Brújula no debe tener** | 🟡 **Nuevo (8-sep).** Mitigación decidida: **registro de app separado y de un solo inquilino** (`brujula-seed`), nunca distribuido. Añadir `ReadWrite` a la app de Brújula destruiría su argumento comercial ante un admin de TI |
+## 14-oct-2026 — OT-06: precarga consentida de sugerencias
+
+- OAuth renovable por usuario con estado de un solo uso, refresh tokens cifrados y revocación con
+  `no vigilar`.
+- Worker separado: solo usuarios con consentimiento, ventana de 7 días/300 mensajes y huella sin
+  contenido para evitar llamadas repetidas a Gemini; `revisar` responde con la bandeja precargada.
+- Pendiente: prueba real Entra/Graph tras el despliegue.

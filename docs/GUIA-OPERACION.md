@@ -322,3 +322,30 @@ El recurso de Azure Bot no tiene el canal de **Microsoft Teams** habilitado (por
 | Entender la arquitectura y qué hace el proyecto | `README.md` |
 | Explicarle a un administrador de TI de un cliente cómo instalar Brújula en su organización | `docs/GUIA-INSTALACION-TI.md` |
 | Ver el historial de decisiones y el estado de los riesgos | `docs/BITACORA.md` |
+
+---
+
+## 9. Producción: vigilancia precargada
+
+El despliegue ejecuta dos procesos del mismo contenedor: `app` atiende Teams y `worker` actualiza
+la bandeja de quienes activaron `vigilar`. Ambos deben recibir el mismo `.env` con:
+
+```dotenv
+AZURE_REDIRECT_URI=https://brujula-teams.duckdns.org/auth/callback
+BRUJULA_URL_PUBLICA=https://brujula-teams.duckdns.org
+BRUJULA_TOKEN_ENCRYPTION_KEY=<clave-Fernet-generada-una-sola-vez>
+```
+
+Genera la clave una sola vez en el servidor y guárdala únicamente en el `.env` de producción:
+
+```powershell
+python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
+```
+
+En Entra, registra exactamente la misma URL de `AZURE_REDIRECT_URI` como plataforma **Web**. Luego
+despliega ambos procesos con `docker compose up -d --force-recreate` y verifica que `docker compose
+ps` muestre `app` y `worker` en ejecución.
+
+Prueba final: escribe `vigilar`, completa Microsoft, espera hasta un minuto, escribe `revisar` y
+verifica una sugerencia; después escribe `no vigilar` y confirma que una nueva revisión no se
+actualiza. Nunca pegues la clave Fernet, el secreto de cliente ni tokens en el chat o repositorio.
