@@ -392,3 +392,43 @@ pregunta y se borra; si se queda, impone su forma al sistema y destruye el ADR-0
 - **Los ADR viven en el repo**, en `docs/adr/`. Cada uno numerado e inmutable: si cambia una decisión, se escribe un ADR nuevo que supersede al anterior. No se reescribe la historia.
 - **README** con: problema, demo en GIF, arquitectura, cómo correrlo localmente, guía de instalación para administradores. Esta es la cara del portafolio.
 - **Nada de secretos en el repo.** `.env` en `.gitignore` desde el commit uno. Un token de Microsoft filtrado en GitHub público es un incidente de seguridad real.
+
+---
+
+## ADR-010 — Precarga de sugerencias con consentimiento
+
+**Estado:** aceptado  
+**Fecha:** 14-oct-2026
+
+### Contexto
+
+Analizar todos los chats al ejecutar `revisar` puede tardar cuando el usuario
+tiene muchas conversaciones. Se necesita que la bandeja responda rápido, sin
+guardar el contenido de los mensajes ni analizar conversaciones sin permiso.
+
+### Decisión
+
+Mientras `vigilancia_activa` sea `true`, un worker separado actualizará las
+sugerencias del usuario como máximo cada 30 minutos.
+
+El worker:
+
+- Lee únicamente mensajes de los últimos 7 días.
+- Procesa como máximo 300 mensajes por usuario en cada ejecución.
+- Solo llama al modelo si encuentra mensajes nuevos o modificados.
+- Guarda sugerencias y metadatos de sincronización, nunca el cuerpo de los
+  mensajes ni el prompt.
+- Conserva `mensaje_id`, `url_mensaje`, `ultima_precarga_en` y el estado de
+  cada sugerencia para evitar proponer de nuevo una sugerencia descartada.
+- Se detiene para el usuario en cuanto ejecute `no vigilar`.
+- Registra errores sin exponer mensajes ni bloquear el bot.
+
+`revisar` muestra primero las sugerencias previamente calculadas y solicita una
+actualización no bloqueante. Por eso la respuesta no espera la llamada al modelo.
+
+### Consecuencias
+
+Se añade un contenedor worker al despliegue y una colección de estado de
+precarga. La vigilancia continúa siendo opcional, revocable y limitada. El
+texto de Teams solo existe en memoria durante cada ejecución y se descarta al
+terminar.

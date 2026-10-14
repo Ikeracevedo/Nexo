@@ -119,6 +119,8 @@ class _RepositorioFalso:
 
     def __init__(self) -> None:
         self.llamadas: list[tuple[str, str, Any]] = []
+        self.llamadas_completar: list[tuple[str, str]] = []
+        self.llamadas_borrar: list[tuple[str, str]] = []
 
     async def guardar(self, usuario_id: str, titulo: str, vence: Any) -> Pendiente:
         self.llamadas.append((usuario_id, titulo, vence))
@@ -130,6 +132,14 @@ class _RepositorioFalso:
             vence=vence,
             confianza=1.0,
         )
+
+    async def completar(self, pendiente_id: str, usuario_id: str) -> bool:
+        self.llamadas_completar.append((pendiente_id, usuario_id))
+        return True
+
+    async def borrar(self, pendiente_id: str, usuario_id: str) -> bool:
+        self.llamadas_borrar.append((pendiente_id, usuario_id))
+        return True
 
 
 async def test_recordar_extrae_titulo_y_guarda() -> None:
@@ -169,3 +179,23 @@ async def test_recordar_acepta_acento_en_recuerdame() -> None:
     svc = ServicioPendientesPropios(repo)
     p = await svc.recordar("recuérdame comprar pan", UID, AHORA)
     assert p.titulo == "comprar pan"
+
+
+async def test_completar_delega_en_el_repositorio_con_el_usuario() -> None:
+    repo = _RepositorioFalso()
+    svc = ServicioPendientesPropios(repo)
+
+    completado = await svc.completar("propio-abc", UID)
+
+    assert completado is True
+    assert repo.llamadas_completar == [("propio-abc", UID)]
+
+
+async def test_borrar_delega_en_el_repositorio_con_el_usuario() -> None:
+    repo = _RepositorioFalso()
+    svc = ServicioPendientesPropios(repo)
+
+    borrado = await svc.borrar("propio-abc", UID)
+
+    assert borrado is True
+    assert repo.llamadas_borrar == [("propio-abc", UID)]

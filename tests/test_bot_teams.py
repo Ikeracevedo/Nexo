@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from datetime import datetime, timedelta
 from types import SimpleNamespace
-from typing import Any
+from typing import Any, cast
 
 import pytest
 from fastapi import FastAPI
@@ -21,15 +21,25 @@ from app.bot.bot_teams import (
     PATRON_AGENDA,
     PATRON_AYUDA,
     PATRON_CHAT,
+    PATRON_NO_VIGILAR,
     PATRON_RECUERDAME,
+    PATRON_REVISAR,
+    PATRON_VIGILAR,
     _usuario_id,
     construir_respuesta_agenda,
+    construir_respuesta_revision,
     crear_bot_teams,
+    procesar_accion_pendiente,
+    procesar_accion_sugerencia,
+    texto_ayuda,
 )
 from app.config import Configuracion
 from app.dominio.errores import FuenteNoDisponibleError
 from app.dominio.pendiente import FuentePendiente, Pendiente
+from app.dominio.sugerencia import DeQuien, Sugerencia
+from app.puertos.fuente_mensajes import MensajeConversacion
 from app.servicios.servicio_agenda import ServicioAgenda
+from app.servicios.servicio_pendientes_propios import ServicioPendientesPropios
 
 AHORA = datetime(2026, 9, 8, 10, 0, 0)
 
@@ -54,6 +64,35 @@ class FuenteRota:
 
     async def obtener_pendientes(self, desde: datetime, hasta: datetime) -> list[Pendiente]:
         raise FuenteNoDisponibleError("planner", "403 Forbidden")
+
+
+class _RepositorioAccionesFalso:
+    def __init__(self, encontrado: bool = True) -> None:
+        self.encontrado = encontrado
+        self.completados: list[tuple[str, str]] = []
+        self.borrados: list[tuple[str, str]] = []
+
+    async def guardar(
+        self,
+        usuario_id: str,
+        titulo: str,
+        vence: datetime | None,
+    ) -> Pendiente:
+        return Pendiente(
+            id="propio-test",
+            titulo=titulo,
+            fuente=FuentePendiente.PROPIO,
+            url_origen="https://teams.microsoft.com",
+            vence=vence,
+        )
+
+    async def completar(self, pendiente_id: str, usuario_id: str) -> bool:
+        self.completados.append((pendiente_id, usuario_id))
+        return self.encontrado
+
+    async def borrar(self, pendiente_id: str, usuario_id: str) -> bool:
+        self.borrados.append((pendiente_id, usuario_id))
+        return self.encontrado
 
 
 def _p(id_: str, confianza: float = 1.0) -> Pendiente:
@@ -96,6 +135,20 @@ def test_reconoce_recuerdame() -> None:
         assert PATRON_RECUERDAME.match(frase), f"No reconocio: {frase!r}"
     for frase in ["semana", "ayuda", "estado"]:
         assert not PATRON_RECUERDAME.match(frase)
+
+
+def test_reconoce_comandos_de_vigilancia() -> None:
+    for frase in ["vigilar", " VIGILAR "]:
+        assert PATRON_VIGILAR.match(frase), f"No reconocio: {frase!r}"
+    for frase in ["no vigilar", "NO VIGILAR"]:
+        assert PATRON_NO_VIGILAR.match(frase), f"No reconocio: {frase!r}"
+
+
+def test_ayuda_explica_como_activar_y_apagar_vigilancia() -> None:
+    ayuda = texto_ayuda("Nexo")
+
+    assert "`vigilar`" in ayuda
+    assert "`no vigilar`" in ayuda
 
 
 def test_chat_no_se_confunde_con_pregunta_de_agenda() -> None:
@@ -147,6 +200,66 @@ async def test_sin_pendientes_y_sin_fallos_no_inventa_una_advertencia() -> None:
     assert "No pude consultar" not in texto
 
 
+async def test_completar_desde_tarjeta_delega_y_confirma() -> None:
+    repo = _RepositorioAccionesFalso()
+    servicio = ServicioPendientesPropios(repo)
+
+    respuesta = await procesar_accion_pendiente(
+        servicio,
+        "completar_pendiente",
+        "propio-abc",
+        "usuario-a",
+    )
+
+    assert repo.completados == [("propio-abc", "usuario-a")]
+    assert respuesta == "✅ Pendiente marcado como listo."
+
+
+async def test_borrar_desde_tarjeta_delega_y_confirma() -> None:
+    repo = _RepositorioAccionesFalso()
+    servicio = ServicioPendientesPropios(repo)
+
+    respuesta = await procesar_accion_pendiente(
+        servicio,
+        "borrar_pendiente",
+        "propio-abc",
+        "usuario-a",
+    )
+
+    assert repo.borrados == [("propio-abc", "usuario-a")]
+    assert respuesta == "🗑️ Pendiente borrado."
+
+
+async def test_accion_desconocida_no_modifica_pendientes() -> None:
+    repo = _RepositorioAccionesFalso()
+    servicio = ServicioPendientesPropios(repo)
+
+    respuesta = await procesar_accion_pendiente(
+        servicio,
+        "otra_accion",
+        "propio-abc",
+        "usuario-a",
+    )
+
+    assert repo.completados == []
+    assert repo.borrados == []
+    assert respuesta == "No entendí la acción solicitada."
+
+
+async def test_pendiente_ausente_no_revela_si_pertenece_a_otra_persona() -> None:
+    repo = _RepositorioAccionesFalso(encontrado=False)
+    servicio = ServicioPendientesPropios(repo)
+
+    respuesta = await procesar_accion_pendiente(
+        servicio,
+        "completar_pendiente",
+        "propio-abc",
+        "usuario-a",
+    )
+
+    assert respuesta == "No encontré ese pendiente. Puede que ya haya cambiado."
+
+
 GUID_BOT = "11111111-2222-3333-4444-555555555555"
 
 
@@ -193,3 +306,112 @@ def test_el_usuario_se_identifica_por_su_aad_object_id() -> None:
 
 def test_sin_aad_object_id_se_usa_el_id_del_canal() -> None:
     assert _usuario_id(_ctx_con_remitente(Account(id="29:abc"))) == "29:abc"
+
+
+class _FuenteMensajesFalsa:
+    def __init__(self, mensajes: list[MensajeConversacion]) -> None:
+        self.mensajes = mensajes
+        self.ultima_consulta: tuple[datetime, int] | None = None
+
+    async def mensajes_recientes(self, desde: datetime, tope: int) -> list[MensajeConversacion]:
+        self.ultima_consulta = (desde, tope)
+        return self.mensajes
+
+
+class _DetectorFalso:
+    def __init__(self, sugerencias: list[Sugerencia]) -> None:
+        self.sugerencias = sugerencias
+
+    async def detectar(
+        self, mensajes: list[MensajeConversacion], ahora: datetime
+    ) -> list[Sugerencia]:
+        return self.sugerencias
+
+
+class _ServicioSugerenciasFalso:
+    def __init__(self, sugerencias: list[Sugerencia], pendiente: Pendiente | None = None) -> None:
+        self.sugerencias = sugerencias
+        self.pendiente = pendiente
+        self.guardadas: tuple[str, list[Sugerencia], datetime] | None = None
+        self.descartadas: list[tuple[str, str]] = []
+
+    async def guardar_detectadas(
+        self, usuario_id: str, sugerencias: list[Sugerencia], detectadas_en: datetime
+    ) -> None:
+        self.guardadas = (usuario_id, sugerencias, detectadas_en)
+
+    async def pendientes(self, usuario_id: str) -> list[Sugerencia]:
+        return self.sugerencias
+
+    async def aceptar(self, sugerencia_id: str, usuario_id: str) -> Pendiente | None:
+        return self.pendiente
+
+    async def descartar(self, sugerencia_id: str, usuario_id: str) -> bool:
+        self.descartadas.append((sugerencia_id, usuario_id))
+        return True
+
+
+def _sugerencia_para_bot() -> Sugerencia:
+    return Sugerencia(
+        id="507f1f77bcf86cd799439011",
+        texto="Enviar el informe",
+        confianza=0.9,
+        id_mensaje="mensaje-1",
+        url_mensaje="https://teams.microsoft.com/l/message/chat/mensaje-1",
+        conversacion="Proyecto TIC",
+        de_quien=DeQuien.USUARIO,
+    )
+
+
+def test_reconoce_el_comando_revisar() -> None:
+    assert PATRON_REVISAR.match("revisar")
+    assert PATRON_REVISAR.match(" REVISAR ")
+
+
+async def test_revisar_usa_ventana_corta_y_muestra_la_bandeja() -> None:
+    mensaje = MensajeConversacion(
+        id="mensaje-1",
+        texto="Manana envio el informe.",
+        autor="Iker",
+        es_del_usuario=True,
+        enviado_en=AHORA,
+        conversacion="Proyecto TIC",
+        url="https://teams.microsoft.com/l/message/chat/mensaje-1",
+    )
+    sugerencia = _sugerencia_para_bot()
+    fuente = _FuenteMensajesFalsa([mensaje])
+    servicio = _ServicioSugerenciasFalso([sugerencia])
+
+    respuesta = await construir_respuesta_revision(
+        cast(Any, fuente),
+        cast(Any, _DetectorFalso([sugerencia])),
+        cast(Any, servicio),
+        "usuario-a",
+        AHORA,
+        "Nexo",
+    )
+
+    assert fuente.ultima_consulta == (AHORA - timedelta(days=7), 300)
+    assert servicio.guardadas == ("usuario-a", [sugerencia], AHORA)
+    assert "Posibles pendientes" in str(respuesta.model_dump(exclude_none=True))
+
+
+async def test_las_acciones_de_sugerencia_aceptan_y_descartan() -> None:
+    pendiente = Pendiente(
+        id="propio-1",
+        titulo="Enviar el informe",
+        fuente=FuentePendiente.PROPIO,
+        url_origen="https://teams.microsoft.com",
+    )
+    servicio = _ServicioSugerenciasFalso([], pendiente)
+
+    aceptada = await procesar_accion_sugerencia(
+        cast(Any, servicio), "aceptar_sugerencia", "sugerencia-1", "usuario-a"
+    )
+    descartada = await procesar_accion_sugerencia(
+        cast(Any, servicio), "descartar_sugerencia", "sugerencia-1", "usuario-a"
+    )
+
+    assert "Enviar el informe" in aceptada
+    assert servicio.descartadas == [("sugerencia-1", "usuario-a")]
+    assert "No volver" in descartada

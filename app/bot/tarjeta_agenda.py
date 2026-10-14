@@ -4,10 +4,12 @@ from datetime import datetime
 from typing import Literal
 
 from microsoft_teams.cards import (
+    Action,
     ActionSet,
     AdaptiveCard,
     CardElement,
     Container,
+    ExecuteAction,
     Fact,
     FactSet,
     OpenUrlAction,
@@ -77,7 +79,31 @@ def _bloque_pendiente(p: Pendiente, ahora: datetime, nombre: str) -> Container:
         )
 
     # Trazabilidad toda afirmacion enlaza a su fuente.
-    items.append(ActionSet(actions=[OpenUrlAction(title="Ver origen", url=p.url_origen)]))
+    acciones: list[Action] = [OpenUrlAction(title="Ver origen", url=p.url_origen)]
+
+    if p.fuente is FuentePendiente.PROPIO:
+        acciones.extend(
+            [
+                ExecuteAction(
+                    title="Listo",
+                    verb="completar_pendiente",
+                    data={
+                        "action": "completar_pendiente",
+                        "pendiente_id": p.id,
+                    },
+                ),
+                ExecuteAction(
+                    title="Borrar",
+                    verb="borrar_pendiente",
+                    data={
+                        "action": "borrar_pendiente",
+                        "pendiente_id": p.id,
+                    },
+                ),
+            ]
+        )
+
+    items.append(ActionSet(actions=acciones))
 
     return Container(items=items, style=estilo, show_border=True, spacing="Medium")
 

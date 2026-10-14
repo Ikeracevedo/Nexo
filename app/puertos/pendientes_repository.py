@@ -28,3 +28,9 @@ class PendientesRepository(Protocol):
         Si falla el almacenamiento: FuenteNoDisponibleError.
         Nunca devolver None ni lanzar silenciosamente.
         """
+
+    async def completar(self, pendiente_id: str, usuario_id: str) -> bool:
+        """Marca como completado. Devuelve False si no existe o no es de ese usuario."""
+
+    async def borrar(self, pendiente_id: str, usuario_id: str) -> bool:
+        """Borra definitivamente. Devuelve False si no existe o no es de ese usuario."""

@@ -42,6 +42,8 @@ class Configuracion(BaseSettings):
     # exactamente lo que el ADR-006 queria que costara una variable.
     gemini_modelo: str = "gemini-2.5-flash"
     mongodb_uri: str = ""
+    brujula_url_publica: str = "https://brujula-teams.duckdns.org"
+    brujula_token_encryption_key: str = ""
 
     @field_validator("azure_tenant_id", "azure_client_id", "teams_bot_id")
     @classmethod

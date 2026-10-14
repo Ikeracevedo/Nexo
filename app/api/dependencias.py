@@ -16,10 +16,17 @@ from __future__ import annotations
 
 from functools import lru_cache
 
-from app.composicion import servicio_de_ejemplo
+from app.composicion import servicio_autorizacion_graph, servicio_de_ejemplo
+from app.config import obtener_configuracion
 from app.servicios.servicio_agenda import ServicioAgenda
+from app.servicios.servicio_autorizacion_graph import ServicioAutorizacionGraph
 
 
 @lru_cache
 def obtener_servicio_agenda() -> ServicioAgenda:
     return servicio_de_ejemplo()
+
+
+def obtener_servicio_autorizacion_graph() -> ServicioAutorizacionGraph:
+    """Construye OAuth por solicitud; nunca conserva estado de un usuario."""
+    return servicio_autorizacion_graph(obtener_configuracion())
