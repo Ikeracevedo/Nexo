@@ -203,8 +203,8 @@ Detalle completo en [`docs/PRIVACIDAD.md`](docs/PRIVACIDAD.md) y [`docs/TERMINOS
 > Para instalarlo **en una organización**, la guía completa está en la [**Wiki**](../../wiki).
 
 ```bash
-git clone https://github.com/Ikeracevedo/brujula-teams.git
-cd brujula-teams
+git clone https://github.com/Ikeracevedo/Nexo.git
+cd Nexo
 
 python -m venv .venv && source .venv/bin/activate   # Windows: .venv\Scripts\activate
 pip install -r requirements-dev.txt
@@ -226,6 +226,7 @@ docker compose up -d --force-recreate   # --force-recreate: sin él no relee el 
 | Documento | Para quién |
 |---|---|
 | [**Wiki de implantación**](../../wiki) | Quien va a instalar Nexo en su empresa |
+| [`docs/ARQUITECTURA.md`](docs/ARQUITECTURA.md) | Definición técnica de arquitectura: diagramas de clases, casos de uso y base de datos |
 | [`docs/GUIA-INSTALACION-TI.md`](docs/GUIA-INSTALACION-TI.md) | El administrador de TI que aprueba los permisos |
 | [`docs/GUIA-OPERACION.md`](docs/GUIA-OPERACION.md) | Quien levanta y diagnostica el entorno |
 | [`docs/RUNBOOK-TENANT.md`](docs/RUNBOOK-TENANT.md) | Reconstruir el tenant desde cero (probado, no solo escrito) |
