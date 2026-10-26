@@ -3,18 +3,98 @@
 > Registro vivo. Se actualiza al cerrar cada Orden de Trabajo.
 > Leer junto con `PLAN-MAESTRO.md` al inicio de cada chat.
 
-**Estado actual:** **F3 — Graph delegado** (30 sep–14 oct); preparación de F4
-**OT activa:** **Validación real de OT-05 y F4 web responsive**
-**OT-04 y OT-04B:** ✅ CERRADAS (16-sep-2026). Datos reales y despliegue en Azure VM exitosos.
-**OT-03A:** ✅ CERRADA (13-sep-2026)
-**OT-02B:** ✅ CERRADA (8-sep-2026), auditada ejecutando la suite. PR #1 mergeada
-**OT-02A:** 98% — bot vivo respondiendo en Teams contra el código permanente (`app/main.py`, no el spike).
-**OT-01:** ✅ CERRADA (23-ago-2026)
-**Repositorio:** `brujula-teams` (público) — `github.com/Ikeracevedo/brujula-teams`
-**Nombre del proyecto:** **Brújula**
-**⏰ ENTREGA FINAL: 28 DE OCTUBRE DE 2026.** Checkpoints: 16 sep · 30 sep · 14 oct · 28 oct
-**Documentos vivos:** `PLAN-COMPLETO.md` · `BITACORA.md` · `RUNBOOK-TENANT.md` · `GUIA-INSTALACION-TI.md` (borrador) · `GUIA-OPERACION.md`
-**Última actualización:** 9 de octubre de 2026 (integración PR #8 desplegada y verificada).
+**Estado actual:** **Cierre del entregable final** (26-oct). Producto desplegado y en uso.
+**OT-06:** ✅ CERRADA — lectura de conversaciones, bandeja de sugerencias, ciclo de vida de pendientes
+**OT-05:** ✅ CERRADA — To Do, Planner, MongoDB y `recuérdame`
+**OT-04C:** ✅ CERRADA — integración de Gemini (trabajo de Julián Gómez)
+**OT-04 / OT-04B:** ✅ CERRADAS (16-sep) — autenticación delegada y despliegue en Azure VM
+**OT-03A:** ✅ CERRADA (13-sep) · **OT-02B:** ✅ (8-sep) · **OT-01:** ✅ (23-ago)
+**Repositorio:** `Nexo` (público) — `github.com/Ikeracevedo/Nexo`
+**Nombre del producto:** **Nexo** *(acordado por el equipo el 26-oct; antes «Brújula»)*
+**⏰ ENTREGA FINAL: 28 DE OCTUBRE DE 2026.**
+**Documentos vivos:** `PLAN-COMPLETO.md` · `BITACORA.md` · `ARQUITECTURA.md` · `RUNBOOK-TENANT.md` · `GUIA-INSTALACION-TI.md` · `GUIA-OPERACION.md` · `wiki/`
+**Última actualización:** 26 de octubre de 2026.
+
+---
+
+## Sesiones del 14 al 26-oct-2026 — OT-06, autenticación propia y cierre
+
+### Lo que entró en producción
+
+| | |
+|---|---|
+| **OT-06 completa** | Lectura de chats (`Chat.Read`), detección de compromisos con salida estructurada, bandeja de sugerencias, `vigilar` / `revisar` / `no vigilar` |
+| **Ciclo de vida de pendientes** | `listo` y `borrar`, con filtro por `usuario_id` también en escritura |
+| **Autenticación propia con Entra** | Flujo *authorization code* propio, además del de Bot Framework |
+| **Worker de precarga** | Proceso aparte, una pasada por minuto |
+| **Landing pública** | `/` sirve una página de presentación |
+| **Proveedor de IA configurable** | PR #23 |
+| **Renombre a Nexo** | Repositorio, manifiesto y `BOT_NOMBRE` |
+
+### 🔴 La decisión que hay que defender: ADR-002 se matizó
+
+ADR-002 decía *«cero credenciales de usuario almacenadas»*, y el hallazgo de OT-04 lo reforzó:
+el Bot Framework Token Service custodiaba los *refresh tokens* y Nexo no guardaba nada.
+
+**El worker de precarga rompe esa premisa**, y no por descuido: para refrescar los datos de un
+usuario **cuando esa persona no está escribiendo**, hace falta un token que sobreviva a la
+conversación. El Token Service solo lo entrega en el contexto de un mensaje.
+
+**Lo que se decidió:** flujo OAuth propio contra Entra ID y *refresh token* guardado en Mongo
+**cifrado con Fernet** (`app/seguridad/cifrado.py`), con la clave fuera del repositorio y solo en
+el servidor.
+
+**Lo que se rechazó:** pedir permisos de aplicación. Habría eliminado la necesidad de guardar
+nada, pero destruye el argumento central del producto ante un admin de TI — una app que puede
+leer los datos de toda la organización no es lo mismo que una que solo ve lo tuyo.
+
+> **La lección, y es de arquitectura, no de criptografía:** *una decisión de diseño no se
+> incumple, se matiza con su coste escrito al lado.* ADR-002 sigue vigente en lo que importa
+> (nada de permisos de aplicación, nada de contraseñas); lo que cambió es que ahora hay un
+> secreto en reposo, y está cifrado y documentado. **Lo que habría sido un fallo es que el
+> cambio ocurriera sin quedar escrito** — en sustentación, una premisa contradicha y no
+> registrada parece un descuido; registrada, parece criterio.
+
+### Verificación del 26-oct, en sala limpia
+
+Clon del repositorio público, `venv` nuevo, instalación desde cero, los comandos exactos del
+workflow:
+
+| Comprobación | Resultado |
+|---|---|
+| `pip install -r requirements-dev.txt` desde cero | **OK** |
+| `ruff check` · `ruff format --check` | limpio · 106 archivos |
+| `mypy` (strict) | **Success: no issues found in 106 source files** |
+| `pytest` | **272 verdes** |
+| Código | 5.566 líneas en `app/` · **5.024 en `tests/`** |
+| Historia | 75 commits · Julián Gómez con 8 |
+
+### Documentación de entrega
+
+- `README.md` reescrito con la identidad Nexo y dos diagramas Mermaid.
+- **`docs/ARQUITECTURA.md`**: definición técnica más los **tres diagramas que exige la rúbrica**
+  (clases, casos de uso, base de datos). En Mermaid y versionados junto al código: *un diagrama
+  en un PowerPoint se desincroniza del código la primera semana.*
+- **`wiki/`**: 14 páginas para que una empresa implante Nexo de principio a fin.
+
+### Hallazgo verificado: las APIs de Teams dejaron de costar dinero
+
+Antes de escribir la OT-06 se comprobó en Microsoft Learn: **desde el 25-ago-2025 las APIs de
+Teams ya no están medidas**; no hay configuración de facturación y el parámetro `model` se
+ignora. Con la documentación de 2024 la función se habría descartado por inviable.
+
+> Tercera vez que esta regla salva una decisión: **la política de una plataforma externa no se
+> deduce, se verifica — y se verifica hoy.** Las otras dos fueron el SDK de Teams sobre FastAPI y
+> el `pydantic` que exigía `google-genai`.
+
+### Deuda consciente al cierre
+
+- **Dos paquetes de Teams conviven** (`teams/appPackage/` con el nombre viejo y `teams/nexo/`),
+  con app ids distintos y el mismo `botId`. Instalar el equivocado manda el consentimiento contra
+  una identidad que no es la registrada. **Hay que retirar el viejo.**
+- **ADR-007 y ADR-008 cumplidos a medias y a propósito:** documentos e historial sí, vectores no
+  (recorte por R9); la tarjeta ya es breve, el segundo nivel de detalle no aporta en el MVP.
+- `docs/evidencia/` sigue sin capturas de octubre.
 
 ---
 
@@ -1671,24 +1751,29 @@ Brechas detectadas. **Repasar antes de la sustentación.**
 
 ---
 
-## Riesgos — actualización 2-sep-2026
+## Riesgos — actualización 26-oct-2026
 
 | # | Riesgo | Estado |
 |---|---|---|
-| R4 | SDK de bot de Teams para Python inmaduro | 🟢 **CERRADO 2-sep.** `microsoft-teams-apps 2.0.16` es GA y corre sobre FastAPI. Riesgo residual: rotación de SDKs y poca documentación de terceros |
-| R8 | **Entregables E2/E3/E4 del curso sin verificar** | 🔴 **Nuevo. Abierto por decisión del tech lead** |
-| R9 | **Ventana real de 8 semanas, no 14** | 🔴 **Nuevo. Mitigado con recorte del RAG** |
-| R10 | **Rúbrica exige responsive Desk+Mobile; el bot no lo cumple literalmente** | 🟡 **DEGRADADO (13-sep).** El tech lead reporta que se le explicó al docente la forma de trabajo y no hay problema. **Salvedad: acuerdo verbal, no escrito.** Mitigación recomendada: captura de `semana` en Teams **móvil** (OT-04 F6) + confirmación por correo. Disparador del 30-sep sigue vigente |
-| R11 | **Tenant vence el 15-sep** | 🟡 **DEGRADADO de 🔴 a 🟡 (8-sep).** Decisión del tech lead: **no se paga; el tenant se reconstruye.** Con `RUNBOOK-TENANT.md` escrito, un tenant caído deja de ser un riesgo de proyecto y pasa a ser ~2 h de trabajo + 24 h de propagación. **Residual:** los pasos P6–P8 (bot, túnel, paquete) siguen sin ejecutarse ni documentarse; hasta OT-03A el runbook está incompleto en su tercio final |
-| R12 | **Spike de Teams se conserva más allá de lo previsto** (decisión del tech lead, para demos a la profesora) | 🟡 **Nuevo (8-sep).** Revisar antes de la entrega final — el repo no debería llegar a sustentación con un spike desechable adentro |
-| R13 | **El SDK de Teams no publica tipos (`py.typed` ni stubs)** | 🟡 **Nuevo (8-sep).** Verificado en `microsoft-teams-apps 2.0.16`. Bajo `mypy --strict` produce 7 errores. Mitigado con excepción acotada a `app.bot.bot_teams`. **El tamaño de esa excepción es la métrica de si la Capa de Bot Delgada sigue siendo delgada** |
-| R14 | **Datos de configuración mal copiados: bugs silenciosos de latencia larga** | 🟢 **Nuevo (8-sep).** Detectado en `AZURE_TENANT_ID` (35 caracteres en vez de 36). Habría explotado en OT-05 con un error opaco. Se cierra con validación de formato GUID en `Configuracion` (OT-03A, Fase 1) |
-| R15 | **Los usuarios finales no pueden consentir apps multiinquilino sin *verified publisher*** | 🟠 **Abierto (8-sep).** Afecta al modelo ISV (ADR-003). Requiere alta en Microsoft Partner Network. Documentado con honestidad en `GUIA-INSTALACION-TI.md` §7: se le dice al admin antes de que lo descubra en la pantalla de aprobación. **No bloquea el desarrollo en tenant propio** |
-| R16 | **El manifiesto de Teams conserva la identidad del scaffold** (`My App, Inc.`, `example.com`) | 🟠 **Abierto (verificado el 13-sep: sigue así).** Teams **exige** URLs válidas de privacidad y términos para publicar. Se cierra en **OT-04 F0.2** |
-| R18 | **Reglas de agente contradiciendo los ADR del proyecto** | 🟢 **CERRADO 13-sep.** Los 5 archivos de `.agents/rules/` reescritos para este repositorio. **Regla adoptada: las reglas de un agente son configuración de producción; si contradicen el repo, el agente no se equivoca, obedece** |
-| R19 | **Sin CI** — el Definition of Done del propio tablero lo exige | 🟠 **Nuevo (13-sep).** `ruff` ha quedado en rojo al entregar **dos OT seguidas**, porque la compuerta depende de que alguien se acuerde. Se cierra en OT-04 F7.1 |
-| R20 | **Paquetes del equipo sin avance desde el 23-ago** (golden dataset de Antonio, ingesta de Julián) | 🟠 **Nuevo (13-sep).** El golden dataset es la respuesta a la pregunta 3 de sustentación. Sin él no hay métrica de calidad |
-| R17 | **`scripts/seed_tenant.py` necesitará permisos de escritura que Brújula no debe tener** | 🟡 **Nuevo (8-sep).** Mitigación decidida: **registro de app separado y de un solo inquilino** (`brujula-seed`), nunca distribuido. Añadir `ReadWrite` a la app de Brújula destruiría su argumento comercial ante un admin de TI |
+| R4 | SDK de bot de Teams para Python inmaduro | 🟢 **CERRADO.** GA y sobre FastAPI |
+| R8 | Entregables E2/E3/E4 del curso sin verificar | 🔴 **Abierto.** Decisión del tech lead |
+| R9 | Ventana real de 8 semanas, no 14 | 🟢 **CERRADO.** Mitigado con el recorte del RAG; el producto llegó completo |
+| R10 | La rúbrica exige responsive Desk+Mobile | 🟡 **Abierto.** Nexo funciona en Teams escritorio, web y móvil. **Falta la captura de ambos y el acuerdo por escrito con el docente** |
+| R11 | Tenant vence | 🟢 **CERRADO.** Migrado; `RUNBOOK-TENANT.md` probado |
+| R12 | `spikes/` y `scratch/` siguen en el repo | 🟠 **Abierto.** 29 archivos desechables. Borrar antes de la entrega |
+| R13 | El SDK de Teams no publica tipos | 🟡 **Controlado.** Excepción acotada a `app.bot.bot_teams`; `mypy --strict` limpio en 106 archivos |
+| R14 | Datos de configuración mal copiados | 🟢 **CERRADO.** Validación de GUID en `Configuracion` |
+| R15 | Sin *Verified Publisher* no hay consentimiento de usuario | 🟠 **Abierto y documentado** en `GUIA-INSTALACION-TI.md` §7 y en la wiki. No bloquea |
+| R16 | El manifiesto conservaba la identidad del scaffold | 🟢 **CERRADO.** Desarrollador, privacidad y términos reales |
+| R18 | Reglas de agente contradiciendo los ADR | 🟢 **CERRADO (13-sep)** |
+| R19 | Sin CI | 🟢 **CERRADO.** Cuatro compuertas + despliegue automático; `desplegar` depende de `calidad` |
+| R20 | Golden dataset sin avance | 🟠 **Abierto.** `tests/manual/probar_gemini.py` es media respuesta; falta la métrica |
+| R21 | **Dos paquetes de Teams con app ids distintos** | 🟠 **Nuevo (26-oct).** Retirar el paquete heredado |
+| R22 | **Refresh tokens almacenados** (matiz de ADR-002) | 🟡 **Nuevo (26-oct).** Mitigado con Fernet y clave fuera del repositorio. Documentado en la sesión del 14–26-oct |
+| R23 | **Texto de terceros enviado a Google** | 🟡 **Nuevo (26-oct).** Opt-in, ventana de 7 días, sin almacenar el texto. Documentado en la wiki §11 para que lo decida cada organización |
+
+---
+
 ## 14-oct-2026 — OT-06: precarga consentida de sugerencias
 
 - OAuth renovable por usuario con estado de un solo uso, refresh tokens cifrados y revocación con
