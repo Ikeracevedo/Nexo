@@ -129,6 +129,13 @@ services:
       disable: true
 ```
 
+> **Por qué la imagen se llama `brujula-teams` y el repositorio `Nexo`.**
+> El proyecto se renombró, pero el paquete publicado en el registro conserva
+> su nombre original: renombrar un paquete de contenedores es una operación
+> aparte, y hacerla sin coordinar el `docker-compose.yml` de cada servidor
+> deja despliegues apuntando a una imagen que ya no existe. **Copia el nombre
+> tal cual aparece arriba.**
+
 ```bash
 docker compose pull
 docker compose up -d --force-recreate

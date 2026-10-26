@@ -203,8 +203,8 @@ Detalle completo en [`docs/PRIVACIDAD.md`](docs/PRIVACIDAD.md) y [`docs/TERMINOS
 > Para instalarlo **en una organización**, la guía completa está en la [**Wiki**](../../wiki).
 
 ```bash
-git clone https://github.com/Ikeracevedo/brujula-teams.git
-cd brujula-teams
+git clone https://github.com/Ikeracevedo/Nexo.git
+cd Nexo
 
 python -m venv .venv && source .venv/bin/activate   # Windows: .venv\Scripts\activate
 pip install -r requirements-dev.txt
