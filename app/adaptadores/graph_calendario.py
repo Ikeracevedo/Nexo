@@ -12,7 +12,7 @@ Solo sabe pedir los eventos a la API Graph y traducirlos a los dominios
 from __future__ import annotations
 
 import logging
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any
 
 from kiota_abstractions.base_request_configuration import RequestConfiguration
@@ -63,7 +63,10 @@ class FuenteCalendarioGraph:
         query_params = CalendarViewRequestBuilder.CalendarViewRequestBuilderGetQueryParameters(
             start_date_time=desde.isoformat(), end_date_time=hasta.isoformat()
         )
-        return RequestConfiguration(query_parameters=query_params)
+        return RequestConfiguration(
+            headers={"Prefer": 'outlook.timezone="UTC"'},
+            query_parameters=query_params,
+        )
 
     @staticmethod
     def _traducir_error(e: Exception) -> FuenteNoDisponibleError:
@@ -85,6 +88,8 @@ class FuenteCalendarioGraph:
         if inicio:
             try:
                 vence = datetime.fromisoformat(str(inicio).replace("Z", "+00:00"))
+                if vence.tzinfo is None:
+                    vence = vence.replace(tzinfo=UTC)
             except ValueError:
                 logger.warning(
                     "Evento %s con fecha ilegible: %r", getattr(evento, "id", "?"), inicio

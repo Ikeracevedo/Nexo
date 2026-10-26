@@ -22,8 +22,9 @@ LUEGO = AHORA + timedelta(days=7)
 
 
 class _Fecha:
-    def __init__(self, date_time: str | None) -> None:
+    def __init__(self, date_time: str | None, time_zone: str = "UTC") -> None:
         self.date_time = date_time
+        self.time_zone = time_zone
 
 
 class _Evento:
@@ -87,6 +88,7 @@ async def test_pide_la_ventana_correcta_a_graph() -> None:
     query_params = g.ultima_config.query_parameters
     assert query_params.start_date_time == AHORA.isoformat()
     assert query_params.end_date_time == LUEGO.isoformat()
+    assert g.ultima_config.headers["Prefer"] == 'outlook.timezone="UTC"'
 
 
 async def test_sin_eventos_devuelve_lista_vacia_no_error() -> None:
@@ -147,3 +149,11 @@ async def test_una_fecha_ilegible_no_tumba_el_evento() -> None:
     fuente = FuenteCalendarioGraph(_GraphFalso([_Evento(inicio="no-es-fecha")]))
     [p] = await fuente.obtener_pendientes(AHORA, LUEGO)
     assert p.vence is None
+
+
+async def test_normaliza_a_utc_la_fecha_de_calendario_sin_zona_horaria() -> None:
+    [pendiente] = await FuenteCalendarioGraph(_GraphFalso([_Evento()])).obtener_pendientes(
+        AHORA, LUEGO
+    )
+    assert pendiente.vence is not None
+    assert pendiente.vence.tzinfo is UTC
