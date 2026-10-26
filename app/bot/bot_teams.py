@@ -84,9 +84,10 @@ def texto_ayuda(nombre: str) -> str:
         "- **`desconectar`** — revoca esa autorización\n"
         "- **`estado`** — si tus datos son reales o de ejemplo, ahora mismo\n"
         "- **`ayuda`** — este mensaje\n\n"
-        "_También puedes preguntarme en lenguaje natural **sobre tus pendientes** "
-        "(«¿qué es lo más urgente?», «¿tengo algo el viernes?»). "
-        "Fuera de eso, escribe `chat` antes de tu pregunta._\n\n"
+        "_También puedes preguntarme en lenguaje natural sobre tus pendientes, "
+        "estudio o trabajo («¿qué es lo más urgente?», «ayúdame a estructurar "
+        "un informe»). Para conversación totalmente general, escribe `chat` "
+        "antes de tu pregunta._\n\n"
         f"_Cada pendiente trae enlace a su origen. Los que {nombre} infirió de una "
         "conversación salen marcados en amarillo con su nivel de confianza._"
     )

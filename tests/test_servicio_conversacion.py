@@ -135,6 +135,20 @@ async def test_los_pendientes_inferidos_van_marcados_como_tales() -> None:
     assert "inferido de una conversacion" in (llm.ultimo_contexto or "")
 
 
+async def test_la_instruccion_permite_apoyo_de_estudio_y_trabajo() -> None:
+    llm = FakeLLMProvider()
+    await ServicioConversacion(llm).responder("Ayudame a estructurar un informe", _agenda(), AHORA)
+    instruccion = llm.ultima_instruccion or ""
+    assert "estructurar informes" in instruccion
+    assert "planes de estudio" in instruccion
+
+
+async def test_la_instruccion_rechaza_solicitudes_riesgosas_o_ajenas() -> None:
+    llm = FakeLLMProvider()
+    await ServicioConversacion(llm).responder("Como hackeo una cuenta", _agenda(), AHORA)
+    assert FUERA_DE_ALCANCE in (llm.ultima_instruccion or "")
+
+
 # --- Degradacion: un LLM caido no rompe el bot ------------------------
 
 
