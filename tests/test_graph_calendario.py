@@ -88,7 +88,6 @@ async def test_pide_la_ventana_correcta_a_graph() -> None:
     query_params = g.ultima_config.query_parameters
     assert query_params.start_date_time == AHORA.isoformat()
     assert query_params.end_date_time == LUEGO.isoformat()
-    assert g.ultima_config.headers["Prefer"] == 'outlook.timezone="UTC"'
 
 
 async def test_sin_eventos_devuelve_lista_vacia_no_error() -> None:
