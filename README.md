@@ -1,124 +1,256 @@
 <div align="center">
-  <img src="docs/logo-upb.png" alt="Universidad Pontificia Bolivariana" width="340"/>
 
-  <h1> Nexo Teams </h1>
+  <img src="docs/logo-upb.png" alt="Universidad Pontificia Bolivariana" width="300"/>
 
-  <p><strong>Tus pendientes están regados entre Planner, To Do, el calendario y un mensaje perdido<br>
-  en un canal de Teams. Nexo los reúne todos y te dice, de una vez, qué tienes esta semana.</strong></p>
+  # Nexo
+
+  **Tus pendientes están regados entre Planner, To Do, el calendario y un mensaje perdido en un chat.
+  Nexo los reúne todos — y encuentra los que nadie anotó.**
 
   <p>
     <img src="https://img.shields.io/badge/Python-3.12-3776AB?logo=python&logoColor=white" />
     <img src="https://img.shields.io/badge/FastAPI-0.118-009688?logo=fastapi&logoColor=white" />
-    <img src="https://img.shields.io/badge/Pydantic-2-E92063?logo=pydantic&logoColor=white" />
     <img src="https://img.shields.io/badge/Microsoft%20Teams-bot-6264A7?logo=microsoftteams&logoColor=white" />
-    <img src="https://img.shields.io/badge/pytest-tested-0A9EDC?logo=pytest&logoColor=white" />
+    <img src="https://img.shields.io/badge/MongoDB-Atlas-47A248?logo=mongodb&logoColor=white" />
+    <img src="https://img.shields.io/badge/Gemini-2.5--flash-8E75B2?logo=googlegemini&logoColor=white" />
+  </p>
+  <p>
+    <img src="https://img.shields.io/badge/tests-272%20passing-0A9EDC?logo=pytest&logoColor=white" />
     <img src="https://img.shields.io/badge/mypy-strict-1F5582" />
-    <img src="https://img.shields.io/badge/ruff-linted-D7FF64?logo=ruff&logoColor=black" />
+    <img src="https://img.shields.io/badge/ruff-clean-D7FF64?logo=ruff&logoColor=black" />
+    <img src="https://img.shields.io/badge/arquitectura-hexagonal-FF6B35" />
   </p>
 
-  <p><strong>Proyecto en TIC 1 — Ingeniería de Sistemas e Informática · Universidad Pontificia Bolivariana</strong></p>
+  **Proyecto en TIC 1** · Ingeniería de Sistemas e Informática
+  Universidad Pontificia Bolivariana — Medellín · 2026
+
+  [Qué hace](#qué-hace) · [Cómo funciona](#cómo-funciona) · [Arquitectura](#arquitectura) · [Instalación](#instalación-rápida-desarrollo) · [**Wiki de implantación**](../../wiki)
+
 </div>
 
 ---
 
-## La idea
+## El problema
 
-Un pendiente de la semana rara vez vive en un solo sitio: una tarea en Planner, un recordatorio en
-To Do, una reunión en el calendario, y un "para el viernes necesito X" que alguien escribió en un
-canal de Teams y que nadie vuelve a leer. Nexo pregunta una sola cosa — **¿qué tengo esta
-semana?** — y reúne la respuesta de todas partes, con un detalle que la hace confiable: **nunca te
-presenta una suposición como si fuera un hecho.** Lo que viene de un sistema real se muestra
-confirmado; lo que Nexo cree entender de una conversación se marca aparte, con su nivel de
-confianza, para que lo verifiques tú.
+Una persona que trabaja o estudia dentro de Microsoft 365 tiene sus compromisos repartidos en cuatro sitios que no se hablan entre sí:
 
-**Lo que vas a poder hacer:**
+- Un **evento** en el calendario de Outlook.
+- Una **tarea** en Microsoft To Do.
+- Una **tarjeta** en un plan de Planner.
+- Y, sobre todo, **una frase suelta en un chat**: *"listo, mañana te paso el informe"*.
+
+Las tres primeras requieren que alguien se haya tomado el trabajo de anotarlas. **La cuarta es la que de verdad se olvida**, y es justamente la que ninguna herramienta de Microsoft recoge, porque ninguna lee tus conversaciones.
+
+## Qué hace
+
+Nexo es un **bot de Microsoft Teams** que responde a *"¿qué tengo esta semana?"* unificando esas cuatro fuentes, y devuelve dos listas separadas:
+
+```
+📋 TUS PENDIENTES (4)
+  • Entrega Proyecto en TIC 1 — mañana 10:00        📅 Calendario
+  • Parcial de Bases de Datos — viernes             ✅ To Do
+  • Revisar el diseño del API — sin fecha           📋 Planner
+  • Llamar al proveedor — hoy                       ✏️ Propio
+
+💡 POSIBLES PENDIENTES (1)  — los encontré en tus conversaciones
+  • Enviar la info del informe a Julián — hoy después de mediodía
+    💬 Chat con Julián Gómez · confianza alta    [Ver mensaje] [Aceptar] [Descartar]
+```
+
+### Las cuatro ideas que lo definen
 
 | | |
 |---|---|
-| 🗂️ **Ver todo junto** | Una sola lista con los pendientes de los próximos 7 días, sin abrir cuatro apps distintas. |
-| 🔗 **Ir directo a la fuente** | Cada pendiente enlaza al lugar exacto de donde salió — Planner, To Do, el calendario o la conversación. |
-| ✅ **Confiar en lo que es un hecho** | Lo que viene de un sistema estructurado se muestra como confirmado, sin ambigüedad. |
-| 💡 **Ver lo que es una inferencia** | Lo que Nexo detecta en una conversación se marca aparte, con su nivel de confianza y un aviso para verificarlo. |
-| 💬 **Preguntarle desde Teams** | Escribe `semana` o `ayuda` en un chat con Nexo, sin salir de donde ya trabajas. |
-| 🚧 **Saber cuándo algo falló** | Si una fuente no responde, Nexo lo dice — nunca confunde un fallo con "no tienes nada pendiente". |
+| **Nunca miente por omisión** | Si una fuente falla, Nexo **lo dice**. Un error jamás se traduce en una lista vacía: `200 OK []` es "no tienes nada"; un `403` es "no pude preguntarle a Planner". Confundirlos es mentir. |
+| **Hecho ≠ inferencia** | Lo que viene de un sistema estructurado tiene `confianza = 1.0`. Lo que infiere el modelo a partir de un chat **no entra en la agenda hasta que el usuario lo confirma**: vive en una bandeja aparte, marcado en amarillo. |
+| **Trazabilidad obligatoria** | Cada pendiente trae el enlace a su origen exacto. Siempre se puede preguntar *"¿de dónde sacaste eso?"* y llegar en un clic. |
+| **Solo lo tuyo** | Autenticación delegada: Nexo actúa **con el token del usuario**. No puede ver nada que esa persona no pueda ver ya. Sin permisos de aplicación sobre la organización. |
 
----
+## Comandos
 
-## Tecnologías
+| Comando | Qué hace |
+|---|---|
+| `semana` | Pendientes de los próximos 7 días, de las cuatro fuentes |
+| `recuérdame <texto> [el viernes]` | Anota un pendiente propio |
+| `listo <n>` · `borrar <n>` | Completa o elimina un pendiente propio |
+| `vigilar` · `no vigilar` | Activa o apaga el análisis de conversaciones (**opt-in**) |
+| `revisar` | Propone los compromisos detectados en tus chats |
+| `chat <pregunta>` | Conversación general con memoria; acepta imágenes, PDF, Word y Excel |
+| `olvidar` | Borra la memoria de esa conversación |
+| `conectar` · `desconectar` | Autoriza o revoca el acceso a tus datos de Microsoft 365 |
+| `estado` | Si los datos que ves son reales o de ejemplo, ahora mismo |
+| `ayuda` | El menú |
 
-| Capa | Tecnología | Rol |
-|---|---|---|
-| Backend | Python 3.12 + FastAPI | Núcleo de la aplicación y canal REST |
-| Configuración | Pydantic Settings | Variables de entorno validadas (nunca arranca con datos mal copiados) |
-| Canal de Teams | `microsoft-teams-apps` (Microsoft 365 Agents SDK) | Bot conversacional, montado sobre la misma app FastAPI |
-| Túnel de desarrollo | Microsoft `devtunnel` | Expone el backend local a Teams durante el desarrollo |
-| Calidad | pytest · ruff · mypy (`--strict`) | Pruebas automatizadas, formato y tipado estricto |
+También responde en lenguaje natural sobre tus pendientes, estudio o trabajo: *"¿qué es lo más urgente?"*, *"¿tengo algo el viernes?"*.
 
----
+## Cómo funciona
+
+```mermaid
+flowchart TB
+    U["👤 Usuario en Teams"] -->|mensaje| BOT["Adaptador de Bot<br/><i>delgado, sin lógica</i>"]
+    BOT --> SRV
+
+    subgraph NUCLEO["NÚCLEO — no sabe que existen Teams, Graph, Mongo ni Gemini"]
+        SRV["Servicios<br/>agenda · conversación · detección · sugerencias"]
+        DOM["Dominio<br/>Pendiente · Agenda · Sugerencia"]
+        PUE["Puertos (Protocol)<br/>TaskSource · LLMProvider · FuenteMensajes · Repositories"]
+        SRV --> DOM
+        SRV --> PUE
+    end
+
+    PUE -.implementan.-> AD
+
+    subgraph AD["Adaptadores secundarios"]
+        CAL["📅 Calendario<br/><i>Calendars.Read</i>"]
+        TODO["✅ To Do<br/><i>Tasks.Read</i>"]
+        PLAN["📋 Planner<br/><i>Tasks.Read</i>"]
+        MONGO["✏️ Propios<br/><i>MongoDB</i>"]
+        CHATS["💬 Chats<br/><i>Chat.Read</i>"]
+        LLM["🤖 Gemini"]
+    end
+
+    CAL & TODO & PLAN & CHATS --> GRAPH[("Microsoft Graph")]
+    MONGO --> ATLAS[("MongoDB Atlas")]
+    LLM --> GEMINI[("Google Gemini")]
+```
+
+### El flujo de `semana`
+
+```mermaid
+sequenceDiagram
+    participant U as Usuario
+    participant B as Bot
+    participant S as ServicioAgenda
+    participant F as 4 fuentes
+    U->>B: semana
+    B->>S: pendientes_de_la_semana(ahora)
+    S->>F: asyncio.gather(..., return_exceptions=True)
+    Note over S,F: Las cuatro en paralelo.<br/>Una caída NO tumba a las demás.
+    F-->>S: 3 listas + 1 FuenteNoDisponibleError
+    S-->>B: Agenda(pendientes, fuentes_fallidas)
+    B-->>U: Tarjeta + "no pude consultar: Planner"
+```
 
 ## Arquitectura
 
-Nexo es **un solo backend con dos puertas de entrada** que hacen la misma pregunta al mismo
-motor interno — no hay una copia de la lógica por canal:
+**Hexagonal (puertos y adaptadores)**, con las carpetas en español por decisión del equipo.
 
 ```
 app/
-├── dominio/       # Qué es un "pendiente", con sus reglas propias.
-├── servicios/     # El motor: reúne pendientes de todas las fuentes conectadas.
-├── adaptadores/   # Microsoft Graph, MongoDB y Gemini detrás de puertos.
-├── api/           # Puerta 1 — REST: GET /api/agenda
-├── bot/           # Puerta 2 — Teams: escribes "semana" y responde por ahí
-└── main.py        # Arma la aplicación completa y conecta las dos puertas al mismo motor
+├── dominio/       # Modelo propio. Solo librería estándar.
+├── puertos/       # Interfaces (typing.Protocol). Lo que el núcleo necesita.
+├── servicios/     # Casos de uso. Dependen de puertos, nunca de implementaciones.
+├── adaptadores/   # Graph, Mongo, Gemini, extractores. Secundarios.
+├── api/           # Adaptador primario: FastAPI (/health, /api/agenda, landing)
+├── bot/           # Adaptador primario: Microsoft Teams
+├── seguridad/     # Cifrado Fernet de tokens persistidos
+├── composicion.py # Composition root: el ÚNICO sitio que ensambla concretos
+├── worker.py      # Proceso aparte: precarga sin bloquear al bot
+└── main.py
 ```
 
-Por eso agregar una fuente nueva (por ejemplo, Google Classroom) es escribir una pieza nueva, no
-tocar el resto del sistema — y por eso el bot de Teams y el endpoint web nunca pueden dar
-respuestas distintas a la misma pregunta.
+### La regla se verifica sola
 
----
+`tests/test_arquitectura.py` es una **función de aptitud**: recorre el AST de cada archivo y rechaza las dependencias prohibidas.
 
-## Instalación y arranque
+| Si alguien escribe… | El test falla con… |
+|---|---|
+| un `import` de infraestructura en `dominio/` | *"el dominio solo usa librería estándar"* |
+| un servicio importando un adaptador | *"un servicio depende de puertos, no de implementaciones"* |
+| un adaptador llamando a un servicio | *"un adaptador secundario no orquesta"* |
 
-Este README explica **qué es** Nexo y **qué vas a poder hacer con ella**. Para levantar el
-proyecto paso a paso en tu máquina — el entorno, el túnel, el servidor, y qué hacer si algo deja de
-responder — está **[`docs/GUIA-OPERACION.md`](docs/GUIA-OPERACION.md)**.
+No es decorativa: **atrapó al propio equipo** colocando una fábrica en `servicios/` durante la OT-02B.
 
-Arranque rápido si el entorno ya existe (detalle completo en esa guía):
+### La prueba de que sirvió
 
-```powershell
-.venv\Scripts\Activate.ps1
-devtunnel host brujula-dev          # en una terminal
-uvicorn app.main:app --reload       # en otra terminal
+Entre la primera fuente y hoy el proyecto pasó de **1 a 4 fuentes** de datos, más lectura de documentos, memoria de chat e imágenes:
+
+```
+app/dominio/agenda.py              0 cambios
+app/servicios/servicio_agenda.py   0 cambios
 ```
 
----
+Añadir un origen de datos cuesta **un archivo nuevo y una línea en `composicion.py`**. Eso no es una opinión sobre arquitectura: es un `git diff`.
 
-## Estado actual y comandos
+## Calidad
 
-En Teams, `semana` reúne calendario, To Do, Planner y pendientes creados con
-`recuérdame <texto>`. Las preguntas libres sobre la agenda consultan esas
-fuentes y declaran cualquier fallo parcial. `conectar`, `desconectar`, `estado`
-y `ayuda` gestionan la sesión y explican el estado.
+Cuatro compuertas, verificadas en entorno limpio antes de cada entrega — `venv` recién creado e instalación desde cero, porque **un entorno reusado no verifica una instalación**:
 
-El aporte de Julián agrega `chat <pregunta>` para conversación general con
-memoria y lectura de imágenes pegadas en Teams. `olvidar` borra la memoria de
-quien lo escribe en esa conversación. Este flujo está separado de la agenda:
-una respuesta general de Gemini no se presenta como un pendiente confirmado.
+```bash
+ruff check .          # ✅ limpio
+ruff format --check . # ✅ 106 archivos
+mypy                  # ✅ strict, sin errores en 106 archivos
+pytest                # ✅ 272 tests
+```
 
-El endpoint HTTP `/api/agenda` todavía usa la fuente de ejemplo. En Teams,
-`vigilar` permite autorizar de forma explícita la lectura limitada de chats;
-el worker detecta sugerencias y `revisar` las muestra para que el usuario las
-acepte o descarte. La interfaz web responsive sigue pendiente.
+5.566 líneas de `app/` frente a 5.024 de `tests/`. El script `verificar-ci.ps1` reproduce el runner de CI en Windows de un solo comando. El pipeline de GitHub Actions ejecuta las cuatro y, solo si pasan, construye la imagen y despliega.
 
----
+## Privacidad
+
+| Pregunta | Respuesta |
+|---|---|
+| ¿Qué puede ver Nexo? | Solo lo que el usuario ya puede ver. Autenticación delegada, nunca permisos de aplicación sobre la organización. |
+| ¿Guarda contraseñas? | **Nunca.** El login ocurre entero dentro de Microsoft. |
+| ¿Guarda tokens? | Los *refresh tokens* necesarios para la precarga se guardan **cifrados con Fernet**; la clave vive solo en el servidor. |
+| ¿Lee mis conversaciones? | **Solo si lo activas con `vigilar`**, solo los últimos 7 días, y se apaga con `no vigilar`. |
+| ¿Guarda mis mensajes? | **No.** Se procesan en memoria y se descartan. En la base queda el pendiente propuesto y el enlace — el texto original se queda en Teams. |
+| ¿Puede escribir en mis datos? | **No.** Todos los permisos de Microsoft son de solo lectura. |
+
+Detalle completo en [`docs/PRIVACIDAD.md`](docs/PRIVACIDAD.md) y [`docs/TERMINOS.md`](docs/TERMINOS.md).
+
+## Instalación rápida (desarrollo)
+
+> Para instalarlo **en una organización**, la guía completa está en la [**Wiki**](../../wiki).
+
+```bash
+git clone https://github.com/Ikeracevedo/brujula-teams.git
+cd brujula-teams
+
+python -m venv .venv && source .venv/bin/activate   # Windows: .venv\Scripts\activate
+pip install -r requirements-dev.txt
+
+cp .env.example .env     # y rellena las credenciales
+uvicorn app.main:app --reload
+```
+
+`http://localhost:8000/health` debe responder `200`. Sin credenciales la aplicación **arranca igual** y trabaja con datos de ejemplo: una función opcional nunca es un requisito de arranque.
+
+Con Docker:
+
+```bash
+docker compose up -d --force-recreate   # --force-recreate: sin él no relee el .env
+```
+
+## Documentación
+
+| Documento | Para quién |
+|---|---|
+| [**Wiki de implantación**](../../wiki) | Quien va a instalar Nexo en su empresa |
+| [`docs/GUIA-INSTALACION-TI.md`](docs/GUIA-INSTALACION-TI.md) | El administrador de TI que aprueba los permisos |
+| [`docs/GUIA-OPERACION.md`](docs/GUIA-OPERACION.md) | Quien levanta y diagnostica el entorno |
+| [`docs/RUNBOOK-TENANT.md`](docs/RUNBOOK-TENANT.md) | Reconstruir el tenant desde cero (probado, no solo escrito) |
+| [`docs/PLAN-COMPLETO.md`](docs/PLAN-COMPLETO.md) | Decisiones de arquitectura (ADR-001 a ADR-010) |
+| [`docs/BITACORA.md`](docs/BITACORA.md) | El registro vivo: hallazgos, errores y por qué de cada decisión |
+| [`docs/PRIVACIDAD.md`](docs/PRIVACIDAD.md) · [`docs/TERMINOS.md`](docs/TERMINOS.md) | Usuarios finales |
+
+> **Sobre la bitácora:** registra también los errores del equipo y los de las herramientas de IA que lo acompañaron. Esa simetría es lo que hace creíble el registro entero.
 
 ## Equipo
 
-| Integrante |
-|---|
-| Iker Acevedo | 
-| Julián | 
-| Antonio |
+| | |
+|---|---|
+| **Iker Acevedo Vargas** | Tech lead — arquitectura, núcleo, adaptadores de Graph, despliegue |
+| **Julián Gómez** | Integración de Gemini · lectura de archivos (PDF, Word, Excel) |
+| **Antonio** | Golden dataset |
 
-Ingeniería de Sistemas e Informática · Universidad Pontificia Bolivariana
-Proyecto en TIC 1
+Desarrollado con asistencia de **Claude Code** y **Codex** bajo un modelo de mentoría técnica: cada decisión de arquitectura quedó documentada con su alternativa descartada y su porqué, en `docs/BITACORA.md`.
+
+## Stack
+
+`Python 3.12` · `FastAPI` · `Pydantic v2` · `microsoft-teams-apps` · `Microsoft Graph SDK` · `MongoDB Atlas` (`pymongo` async) · `google-genai` · `pytest` · `mypy --strict` · `ruff` · `Docker` · `GitHub Actions` · `Azure VM` + `Caddy`
+
+---
+
+<div align="center">
+<sub>Universidad Pontificia Bolivariana · Proyecto en TIC 1 · 2026</sub>
+</div>
