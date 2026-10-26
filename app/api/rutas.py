@@ -17,6 +17,7 @@ from app.api.dependencias import (
     obtener_servicio_autorizacion_graph,
 )
 from app.api.esquemas import AgendaDTO, SaludDTO
+from app.api.pagina_inicio import PAGINA_INICIO
 from app.config import obtener_configuracion
 from app.dominio.errores import BrujulaError
 from app.servicios.servicio_agenda import ServicioAgenda
@@ -25,6 +26,12 @@ from app.servicios.servicio_autorizacion_graph import ServicioAutorizacionGraph
 VERSION = "0.2.0"
 
 router = APIRouter()
+
+
+@router.get("/", response_class=HTMLResponse, include_in_schema=False)
+async def pagina_inicio() -> HTMLResponse:
+    """Presenta Nexo y explica el primer paso dentro de Teams."""
+    return HTMLResponse(PAGINA_INICIO)
 
 
 @router.get("/health", response_model=SaludDTO, tags=["operacion"])
