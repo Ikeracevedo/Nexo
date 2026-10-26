@@ -10,6 +10,7 @@ import logging
 from datetime import datetime
 from typing import Any
 
+from app.adaptadores.cliente_mongo import obtener_cliente_mongo
 from app.config import Configuracion
 from app.dominio.errores import FuenteNoDisponibleError
 from app.seguridad.cifrado import CifradorTokens
@@ -104,11 +105,5 @@ class CredencialesGraphMongo:
         if not self._uri:
             raise FuenteNoDisponibleError(NOMBRE, "MONGODB_URI no configurado")
         if self._cliente is None:
-            from pymongo import AsyncMongoClient
-
-            self._cliente = AsyncMongoClient(
-                self._uri,
-                serverSelectionTimeoutMS=TIMEOUT_SELECCION_MS,
-                connectTimeoutMS=TIMEOUT_SELECCION_MS,
-            )
+            self._cliente = obtener_cliente_mongo(self._uri)
         return self._cliente[_BD][_COLECCION]

@@ -1,60 +1,61 @@
-# Política de Privacidad — Brújula
+# Política de Privacidad — Nexo
 
 **Última actualización:** 9 de octubre de 2026
 
-Brújula es una aplicación desarrollada como proyecto académico (Proyecto en TIC 1, Universidad
+Nexo es una aplicación desarrollada como proyecto académico (Proyecto en TIC 1, Universidad
 Pontificia Bolivariana) que se integra con Microsoft Teams para ayudar a estudiantes a consolidar,
 en un solo lugar, sus pendientes académicos: eventos de calendario, tareas y compromisos de equipo.
 
-Esta política explica, en lenguaje llano, qué datos lee Brújula, para qué los usa, dónde viven y
+Esta política explica, en lenguaje llano, qué datos lee Nexo, para qué los usa, dónde viven y
 qué control tiene el usuario sobre ellos.
 
 ---
 
-## 1. Qué datos lee Brújula, y por qué
+## 1. Qué datos lee Nexo, y por qué
 
-Brújula solicita acceso a tu cuenta de Microsoft mediante los siguientes permisos, **todos de solo
+Nexo solicita acceso a tu cuenta de Microsoft mediante los siguientes permisos, **todos de solo
 lectura**:
 
-| Permiso técnico (Microsoft Graph) | Qué significa en la práctica | Para qué lo usa Brújula |
+| Permiso técnico (Microsoft Graph) | Qué significa en la práctica | Para qué lo usa Nexo |
 |---|---|---|
 | `User.Read` | Leer tu nombre y datos básicos de perfil | Saludarte y confirmar que la sesión es tuya |
 | `Calendars.Read` | Leer tus eventos de calendario | Mostrarte tus compromisos de la semana |
 | `Tasks.Read` | Leer tus tareas (Microsoft To Do / Planner) | Mostrarte tus pendientes junto al calendario |
-| `Team.ReadBasic.All` | Ver de qué equipos de Teams eres miembro | Identificar el contexto de tus entregas de equipo |
+| `Group.Read.All` | Leer los grupos de Microsoft 365 relacionados con Planner | Consultar las tareas que te corresponden en Planner |
 | `Chat.Read` | Leer tus chats de Teams | Detectar compromisos mencionados en conversaciones |
 
-**No existe ningún permiso de escritura.** Brújula no puede crear, modificar ni borrar nada en tu
+**No existe ningún permiso de escritura.** Nexo no puede crear, modificar ni borrar nada en tu
 calendario, tus tareas, tus equipos ni tus chats — solo puede leerlos. Tampoco puede ver datos de
 otros usuarios de tu organización: solo ve lo que tú, con tu propia cuenta, puedes ver.
 
 ## 2. Cómo se obtiene el acceso
 
-Brújula usa el flujo de **autorización delegada** de Microsoft (OAuth 2.0). Esto quiere decir:
+Nexo usa el flujo de **autorización delegada** de Microsoft (OAuth 2.0). Esto quiere decir:
 
 - Tú das tu consentimiento explícito, una sola vez, a través de la pantalla oficial de Microsoft —
-  nunca a través de un formulario propio de Brújula.
-- Brújula actúa **como tú y con tus permisos**, nunca con permisos elevados sobre tu organización.
+  nunca a través de un formulario propio de Nexo.
+- Nexo actúa **como tú y con tus permisos**, nunca con permisos elevados sobre tu organización.
 - Puedes revocar el acceso en cualquier momento escribiendo `desconectar` en el chat, o desde
   [myaccount.microsoft.com](https://myaccount.microsoft.com) → Aplicaciones conectadas.
 
 ## 3. Dónde viven tus credenciales y tokens
 
-**Brújula nunca ve ni almacena tu contraseña.** El inicio de sesión ocurre por completo dentro de
-la pantalla de Microsoft; Brújula nunca la observa.
+**Nexo nunca ve ni almacena tu contraseña.** El inicio de sesión ocurre por completo dentro de
+la pantalla de Microsoft; Nexo nunca la observa.
 
-Los tokens de acceso y de renovación (*refresh tokens*) son gestionados por el **Bot Framework
-Token Service** de Microsoft, no por la infraestructura de Brújula. En la práctica:
+Para la agenda y las tareas, Nexo obtiene los tokens de acceso mediante el servicio de autenticación
+de Microsoft Teams. Para la vigilancia que se activa con `vigilar`, el usuario autoriza un flujo
+OAuth separado que permite renovar el acceso sin estar conectado al chat del bot. En la práctica:
 
-- Brújula pide un token vigente al servicio de Microsoft en cada operación que necesita hacer.
-- Brújula no guarda esos tokens en ninguna base de datos propia.
-- Si revocas el acceso, el siguiente intento de lectura falla de inmediato y Brújula te lo informa
-  con claridad, sin fingir que no tienes pendientes.
+- Nexo almacena únicamente el *refresh token* de esa vigilancia, cifrado con Fernet en MongoDB.
+- El *access token* se usa solo en memoria durante la consulta a Microsoft Graph y no se persiste.
+- No se almacenan contraseñas, tokens en claro ni tokens en archivos de log.
+- `no vigilar` elimina el *refresh token* cifrado y detiene nuevas lecturas de conversaciones.
 
 ## 4. Qué pasa si algo falla
 
 Si una fuente de datos (por ejemplo, tu calendario) no puede consultarse — porque el permiso fue
-revocado, porque hubo un error de conexión, o porque el servicio de Microsoft no respondió — Brújula
+revocado, porque hubo un error de conexión, o porque el servicio de Microsoft no respondió — Nexo
 **nunca lo interpreta como "no tienes pendientes"**. Te informa explícitamente cuál fuente falló,
 y te muestra igualmente los datos de las fuentes que sí respondieron.
 
@@ -82,7 +83,7 @@ el chat puede contestar, pero indica que no pudo guardar memoria de esa respuest
   propios ni el historial de chat. Para pedir el borrado de pendientes propios,
   contacta al desarrollador indicado al final de esta política.
 
-## 6. Qué no hace Brújula
+## 6. Qué no hace Nexo
 
 - No vende tus datos ni los usa con fines publicitarios.
 - No mantiene una copia permanente de tus eventos o tareas de Microsoft Graph.
@@ -94,14 +95,14 @@ el chat puede contestar, pero indica que no pudo guardar memoria de esa respuest
 
 Como usuario, en cualquier momento puedes:
 
-- Revocar el acceso de Brújula a tu cuenta (comando `desconectar`, o desde tu cuenta de Microsoft).
+- Revocar el acceso de Nexo a tu cuenta (comando `desconectar`, o desde tu cuenta de Microsoft).
 - Preguntar qué fuentes están conectadas realmente (comando `estado`).
-- Solicitar información sobre qué datos ha leído Brújula, escribiendo al contacto indicado abajo.
+- Solicitar información sobre qué datos ha leído Nexo, escribiendo al contacto indicado abajo.
 - Borrar el historial del chat con `olvidar` y solicitar el borrado de pendientes propios al contacto.
 
 ## 8. Naturaleza académica del proyecto
 
-Brújula es un proyecto desarrollado en el marco de una asignatura universitaria (Proyecto en TIC 1,
+Nexo es un proyecto desarrollado en el marco de una asignatura universitaria (Proyecto en TIC 1,
 UPB). No es un producto comercial en operación permanente. Esta política se mantiene vigente
 mientras el proyecto esté activo y se actualizará si su alcance cambia.
 
@@ -114,10 +115,9 @@ Repositorio del proyecto: [github.com/Ikeracevedo/brujula-teams](https://github.
 
 ---
 
-## 10. Actualización OT-06: vigilancia y precarga
+## 10. Vigilancia y precarga de conversaciones
 
-Esta sección prevalece sobre cualquier redacción anterior relativa a tokens de renovación. La
-vigilancia de conversaciones está apagada por defecto. Tras `vigilar`, Brújula obtiene un
+La vigilancia de conversaciones está apagada por defecto. Tras `vigilar`, Nexo obtiene un
 consentimiento OAuth separado para la precarga y almacena el *refresh token* delegado cifrado con
 Fernet en MongoDB Atlas. Nunca almacena contraseñas, tokens en claro ni tokens en logs; el access
 token solo existe en memoria durante la consulta.

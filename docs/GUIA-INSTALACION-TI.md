@@ -1,4 +1,4 @@
-# Brújula — Guía de instalación para el administrador de TI
+# Nexo — Guía de instalación para el administrador de TI
 
 > **⚠️ BORRADOR — versión 0.1, 8 de septiembre de 2026.**
 > Los campos marcados «así» están pendientes y **no se puede enviar a nadie hasta rellenarlos**.
@@ -11,14 +11,14 @@
 
 ## En 30 segundos
 
-Brújula es un asistente dentro de Microsoft Teams que responde *"¿qué tengo esta semana?"*
+Nexo es un asistente dentro de Microsoft Teams que responde *"¿qué tengo esta semana?"*
 reuniendo los pendientes que su gente ya tiene dispersos en Planner, To Do, Calendario y
 conversaciones, y devolviéndolos en una sola lista **con enlace a su origen**.
 
 | | |
 |---|---|
 | **Qué necesita de usted** | Una aprobación de consentimiento y una instalación en Teams. Nada más |
-| **Qué instala en su infraestructura** | Nada. Brújula se ejecuta en «‹hosting›», fuera de su tenant |
+| **Qué instala en su infraestructura** | Nada. Nexo se ejecuta en «‹hosting›», fuera de su tenant |
 | **Qué permisos pide** | Cinco, **todos de solo lectura**. Ninguno de escritura |
 | **Qué datos ve** | Únicamente los del usuario que inició sesión, y solo lo que ese usuario ya puede ver |
 | **Tiempo de instalación** | ~10 minutos |
@@ -44,7 +44,7 @@ conversaciones, y devolviéndolos en una sola lista **con enlace a su origen**.
 
 ## 2. Permisos solicitados
 
-Los cinco son **permisos delegados de Microsoft Graph**: Brújula actúa *como el usuario* y con los
+Los cinco son **permisos delegados de Microsoft Graph**: Nexo actúa *como el usuario* y con los
 permisos del usuario. Nunca por sí misma sobre la organización.
 
 | Permiso | Qué dato lee | Para qué |
@@ -52,12 +52,12 @@ permisos del usuario. Nunca por sí misma sobre la organización.
 | `User.Read` | Nombre y correo del usuario que inició sesión | Identificar a quién se responde |
 | `Calendars.Read` | Eventos del calendario **del propio usuario** | Mostrar compromisos de la semana |
 | `Tasks.Read` | Tareas de To Do y Planner del usuario | Fuente principal de pendientes |
-| `Team.ReadBasic.All` | **Solo nombres y descripciones** de los equipos a los que el usuario ya pertenece | Ubicar el origen de un pendiente. No da acceso al contenido |
+| `Group.Read.All` | Grupos de Microsoft 365 relacionados con Planner | Consultar las tareas de Planner que corresponden al usuario |
 | `Chat.Read` | Mensajes de los chats del usuario | Detectar compromisos mencionados en conversación |
 
 ### Lo que NO se pide, y es lo importante
 
-**Ningún permiso termina en `ReadWrite`. Ninguno.** Brújula no puede modificar nada en su tenant,
+**Ningún permiso termina en `ReadWrite`. Ninguno.** Nexo no puede modificar nada en su tenant,
 ni aunque quisiera: los permisos que se lo permitirían no están en la solicitud, y añadirlos
 requeriría una nueva aprobación suya.
 
@@ -68,10 +68,9 @@ Consent*), donde el propietario de un equipo concreto autoriza la app solo sobre
 pasar por usted como administrador del tenant. Se documentará como una decisión suya, equipo por
 equipo, cuando esa fuente esté implementada.
 
-> Sobre `Team.ReadBasic.All`: el sufijo `.All` suele encender alarmas y es correcto que así sea.
-> En este caso cubre **únicamente nombres y descripciones** de los equipos a los que el usuario ya
-> pertenece — el equivalente a la lista que ya ve en su barra lateral de Teams. No otorga acceso a
-> mensajes, archivos ni miembros.
+> Sobre `Group.Read.All`: el sufijo `.All` exige una revisión explícita del administrador. Nexo lo
+> usa para consultar las tareas de Planner asociadas a los grupos de Microsoft 365; no solicita
+> permisos de escritura sobre grupos, tareas ni mensajes.
 
 ---
 
@@ -79,7 +78,7 @@ equipo, cuando esa fuente esté implementada.
 
 - Un tenant de Microsoft 365 con Teams (cualquier plan de empresa o educación).
 - Un usuario con rol **Administrador global** o **Administrador de aplicaciones en la nube**.
-- Permitir la carga de aplicaciones personalizadas, **o** publicar Brújula en su catálogo interno.
+- Permitir la carga de aplicaciones personalizadas, **o** publicar Nexo en su catálogo interno.
   Sección 4.2.
 
 ---
@@ -96,7 +95,7 @@ https://login.microsoftonline.com/{su-tenant}/adminconsent?client_id=«CLIENT_ID
 ```
 
 Verá la lista exacta de permisos de la sección 2. Revísela antes de aprobar: **lo que aparece en
-esa pantalla es todo lo que Brújula puede hacer.** Si aparece algo distinto de esos cinco permisos
+esa pantalla es todo lo que Nexo puede hacer.** Si aparece algo distinto de esos cinco permisos
 de lectura, **no apruebe y avísenos** — significaría que está usando un enlace que no es el nuestro.
 
 > 🔴 **Pendiente del proveedor:** el `CLIENT_ID` de la aplicación de producción. El actual pertenece
@@ -106,7 +105,7 @@ de lectura, **no apruebe y avísenos** — significaría que está usando un enl
 
 **Opción A — catálogo de la organización (recomendada).**
 Centro de administración de Teams → *Aplicaciones de Teams* → **Administrar aplicaciones** →
-*Cargar nueva aplicación* → seleccione el paquete `«brujula-vX.Y.Z.zip»` que le entregamos.
+*Cargar nueva aplicación* → seleccione el paquete `nexo-teams.zip` que le entregamos.
 Desde ahí puede asignar quién ve la app mediante directivas de permisos.
 
 **Opción B — carga individual.** Si su organización permite cargar apps personalizadas, cada
@@ -115,12 +114,12 @@ personalizada*.
 
 ### 4.3 — Comprobar que funciona
 
-Abra un chat con **Brújula** y escriba `ayuda`. Debe responder con la lista de comandos
+Abra un chat con **Nexo** y escriba `ayuda`. Debe responder con la lista de comandos
 disponibles. Después, `semana`.
 
 **En el primer uso, cada usuario verá una pantalla de inicio de sesión de Microsoft.** Es esperado:
 el consentimiento de administrador autoriza a la aplicación, pero cada usuario sigue autenticándose
-con su propia cuenta. Brújula nunca ve ni almacena contraseñas.
+con su propia cuenta. Nexo nunca ve ni almacena contraseñas.
 
 ---
 
@@ -128,7 +127,7 @@ con su propia cuenta. Brújula nunca ve ni almacena contraseñas.
 
 En cualquier momento y sin avisarnos:
 
-**Portal de Microsoft Entra** → *Aplicaciones empresariales* → buscar **Brújula** →
+**Portal de Microsoft Entra** → *Aplicaciones empresariales* → buscar **Nexo** →
 **Propiedades** → *Eliminar*.
 
 El acceso se corta de inmediato. Los tokens emitidos dejan de renovarse y los existentes caducan en
@@ -151,11 +150,11 @@ usuarios inicien sesión?** → **No**.
 
 | Pregunta | Respuesta |
 |---|---|
-| ¿Dónde se ejecuta Brújula? | Despliegue académico: Azure VM en México Central. Confirmar la región del despliegue de cada cliente. |
-| ¿Qué se almacena? | En MongoDB Atlas: pendientes creados con `recuérdame` y hasta 40 turnos breves por usuario y conversación del modo `chat`. No se guardan copias de los eventos y tareas de Graph ni bytes de imágenes. |
+| ¿Dónde se ejecuta Nexo? | Despliegue académico: Azure VM en México Central. Confirmar la región del despliegue de cada cliente. |
+| ¿Qué se almacena? | En MongoDB Atlas: pendientes creados con `recuérdame`, hasta 40 turnos breves por usuario y conversación del modo `chat`, sugerencias detectadas y un refresh token cifrado únicamente para usuarios que activan `vigilar`. No se guardan copias de eventos, tareas ni cuerpos de mensajes de Teams. |
 | ¿Durante cuánto tiempo? | La memoria de chat caduca tras 30 días sin actividad y puede borrarse con `olvidar`. Los pendientes propios permanecen hasta que se solicite su eliminación. |
 | ¿Se almacenan credenciales? | **No.** Nunca se almacenan contraseñas de usuario |
-| ¿Cómo se guardan los tokens? | Los tokens de usuario los custodia Microsoft Bot Framework Token Service; Brújula no conserva refresh tokens. |
+| ¿Cómo se guardan los tokens? | Para `vigilar`, Nexo conserva un refresh token delegado cifrado con Fernet. El access token solo existe en memoria y `no vigilar` elimina el refresh token cifrado. |
 | ¿Se usan los datos para entrenar modelos? | La aplicación no entrena modelos. Las condiciones de uso de datos de Gemini deben revisarse con Google antes de aprobar un tenant cliente. |
 | ¿Qué proveedor de IA procesa el texto? | Google Gemini procesa preguntas sobre la agenda, chat general e imágenes. Confirmar región y retención contractual antes de instalar en un cliente. |
 | ¿Hay subencargados de tratamiento? | Microsoft, MongoDB Atlas y Google intervienen en los flujos descritos. Revisar los acuerdos de tratamiento aplicables. |
@@ -169,7 +168,7 @@ propios.
 
 ## 7. Estado de verificación del editor 🔴
 
-**Brújula no cuenta todavía con el distintivo *Verified Publisher* de Microsoft.**
+**Nexo no cuenta todavía con el distintivo *Verified Publisher* de Microsoft.**
 
 Consecuencias concretas para usted:
 
@@ -187,22 +186,22 @@ del proveedor: alta en el Microsoft Partner Network y solicitud de verificación
 
 **¿Puede un usuario ver los pendientes de otro?**
 No. Cada respuesta se construye con el token del usuario que pregunta, y ese token solo abre lo que
-ese usuario ya puede abrir. No existe ninguna ruta en la que Brújula consulte datos de un usuario
+ese usuario ya puede abrir. No existe ninguna ruta en la que Nexo consulte datos de un usuario
 distinto del que hizo la petición.
 
 **¿Y si el modelo se inventa una fecha de entrega?**
-Brújula distingue explícitamente un **hecho** de una **inferencia**. Lo que viene de Planner, To Do
+Nexo distingue explícitamente un **hecho** de una **inferencia**. Lo que viene de Planner, To Do
 o Calendario se muestra como confirmado. Lo que se deduce de una conversación se muestra en otro
-color, con su porcentaje de confianza y el aviso *"Brújula no confirma este pendiente. Verifícalo
+color, con su porcentaje de confianza y el aviso *"Nexo no confirma este pendiente. Verifícalo
 en el origen."* Todo elemento, sin excepción, enlaza a su fuente.
 
-**¿Qué pasa si Brújula no puede consultar una de las fuentes?**
+**¿Qué pasa si Nexo no puede consultar una de las fuentes?**
 Lo dice. Si Planner no responde, la respuesta incluye *"No pude consultar: Planner — esta lista
 está incompleta."* **Nunca presenta un fallo como ausencia de pendientes**, porque un usuario que
 confía en un "no tienes nada" equivocado pierde una entrega.
 
 **¿Qué diferencia hay con Microsoft Copilot?**
-Copilot requiere licencia adicional y es un asistente de propósito general. Brújula hace una sola
+Copilot requiere licencia adicional y es un asistente de propósito general. Nexo hace una sola
 cosa —unificar pendientes dispersos con trazabilidad obligatoria— y funciona sin licencias de
 Copilot.
 

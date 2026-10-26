@@ -1,5 +1,5 @@
 [project]
-name = "brujula"
+name = "nexo"
 version = "0.1.0"
 description = "Asistente que unifica pendientes dispersos de Microsoft 365 y los devuelve con su origen"
 requires-python = ">=3.12"

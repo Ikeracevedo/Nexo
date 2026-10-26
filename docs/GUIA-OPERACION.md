@@ -1,4 +1,4 @@
-# Guía de operación — levantar Brújula en desarrollo
+# Guía de operación — levantar Nexo en desarrollo
 
 > **Para quién:** quien va a arrancar el proyecto en su máquina en el día a día — venv, túnel,
 > `uvicorn` — para desarrollar o hacer una demo. **No** es para crear infraestructura de Microsoft
@@ -58,7 +58,7 @@ sección 5 explica exactamente qué hacer cuando pasa.
                                     # añadir C:\devtunnel a la variable de entorno Path del sistema
   ```
 - Una cuenta para iniciar sesión en `devtunnel` (puede ser una cuenta personal de Microsoft, **no**
-  tiene que ser la del tenant de Brújula — el túnel es infraestructura de desarrollo tuya, no del
+  tiene que ser la del tenant de Nexo — el túnel es infraestructura de desarrollo tuya, no del
   producto). Sesión ya iniciada:
   ```powershell
   devtunnel user login
@@ -158,7 +158,7 @@ local (venv, `.env`, un error de código) y todavía no tiene nada que ver con T
 ### Probar el bot en Teams
 
 Con las dos terminales corriendo y la URL del túnel ya configurada en Azure (sección 5), abre un
-chat con **Brújula** en Teams y escribe:
+chat con **Nexo** en Teams y escribe:
 
 ```
 ayuda
@@ -167,7 +167,7 @@ semana
 
 `ayuda` debe responder con la lista de comandos. `semana` debe responder con la tarjeta de
 pendientes. Un mensaje fuera de alcance (por ejemplo, "dame una receta de pasta") debe recibir el
-mensaje de "Brújula solo responde sobre tus pendientes".
+mensaje de "Nexo solo responde sobre tus pendientes".
 
 ---
 
@@ -225,7 +225,7 @@ La URL del túnel tiene que coincidir en **un único lugar de Azure**: el *Messa
 registro del bot.
 
 1. Ve a [portal.azure.com](https://portal.azure.com) → busca el recurso del **Azure Bot** de
-   Brújula (no el "tic1" de las pruebas iniciales — el bot dedicado creado en OT-03A).
+   Nexo (no el "tic1" de las pruebas iniciales — el bot dedicado creado en OT-03A).
 2. **Configuration** (en el menú lateral del recurso).
 3. Campo **Messaging endpoint** → reemplázalo por:
    ```
@@ -320,7 +320,7 @@ El recurso de Azure Bot no tiene el canal de **Microsoft Teams** habilitado (por
 |---|---|
 | Crear el tenant, registrar la app de Entra, registrar el bot, generar el paquete de Teams desde cero | `docs/RUNBOOK-TENANT.md` |
 | Entender la arquitectura y qué hace el proyecto | `README.md` |
-| Explicarle a un administrador de TI de un cliente cómo instalar Brújula en su organización | `docs/GUIA-INSTALACION-TI.md` |
+| Explicarle a un administrador de TI de un cliente cómo instalar Nexo en su organización | `docs/GUIA-INSTALACION-TI.md` |
 | Ver el historial de decisiones y el estado de los riesgos | `docs/BITACORA.md` |
 
 ---
