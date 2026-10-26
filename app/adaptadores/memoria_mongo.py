@@ -47,7 +47,7 @@ class MemoriaMongo:
         if not self._uri:
             raise MemoriaNoDisponibleError("MONGODB_URI no configurado")
         if self._cliente is None:
-            self._cliente = obtener_cliente_mongo(self._uri, tz_aware=True)
+            self._cliente = obtener_cliente_mongo(self._uri)
         return self._cliente[self._base][self._nombre_coleccion]
 
     async def _asegurar_indices(self, col: Any) -> None:

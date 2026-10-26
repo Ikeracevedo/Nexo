@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import logging
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any
 
 from app.adaptadores.cliente_mongo import obtener_cliente_mongo
@@ -41,6 +41,8 @@ class EstadoPrecargaMongo:
         huella = documento.get("huella_mensajes")
         if not isinstance(fecha, datetime) or not isinstance(huella, str):
             return None
+        if fecha.tzinfo is None:
+            fecha = fecha.replace(tzinfo=UTC)
         return EstadoPrecarga(fecha, huella)
 
     async def guardar(self, usuario_id: str, estado: EstadoPrecarga) -> None:

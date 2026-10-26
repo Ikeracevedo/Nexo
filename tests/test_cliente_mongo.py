@@ -12,6 +12,7 @@ def test_reutiliza_un_cliente_por_uri_y_configuracion(monkeypatch: MonkeyPatch) 
         cliente = object()
         clientes.append(cliente)
         assert args == ("mongodb://prueba",)
+        assert kwargs["tz_aware"] is True
         assert kwargs["maxPoolSize"] == cliente_mongo.MAX_CONEXIONES_POR_PROCESO
         return cliente
 
