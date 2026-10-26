@@ -39,6 +39,14 @@ jobs:
           push: true
           tags: ghcr.io/ikeracevedo/brujula-teams:latest
 
+      - uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.VM_HOST }}
+          username: azureuser
+          key: ${{ secrets.VM_SSH_KEY }}
+          source: docker-compose.yml
+          target: /home/azureuser
+
       - uses: appleboy/ssh-action@v1.2.0
         with:
           host: ${{ secrets.VM_HOST }}
