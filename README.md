@@ -1,10 +1,10 @@
 <div align="center">
   <img src="docs/logo-upb.png" alt="Universidad Pontificia Bolivariana" width="340"/>
 
-  <h1> Brújula Teams </h1>
+  <h1> Nexo Teams </h1>
 
   <p><strong>Tus pendientes están regados entre Planner, To Do, el calendario y un mensaje perdido<br>
-  en un canal de Teams. Brújula los reúne todos y te dice, de una vez, qué tienes esta semana.</strong></p>
+  en un canal de Teams. Nexo los reúne todos y te dice, de una vez, qué tienes esta semana.</strong></p>
 
   <p>
     <img src="https://img.shields.io/badge/Python-3.12-3776AB?logo=python&logoColor=white" />
@@ -25,10 +25,10 @@
 
 Un pendiente de la semana rara vez vive en un solo sitio: una tarea en Planner, un recordatorio en
 To Do, una reunión en el calendario, y un "para el viernes necesito X" que alguien escribió en un
-canal de Teams y que nadie vuelve a leer. Brújula pregunta una sola cosa — **¿qué tengo esta
+canal de Teams y que nadie vuelve a leer. Nexo pregunta una sola cosa — **¿qué tengo esta
 semana?** — y reúne la respuesta de todas partes, con un detalle que la hace confiable: **nunca te
 presenta una suposición como si fuera un hecho.** Lo que viene de un sistema real se muestra
-confirmado; lo que Brújula cree entender de una conversación se marca aparte, con su nivel de
+confirmado; lo que Nexo cree entender de una conversación se marca aparte, con su nivel de
 confianza, para que lo verifiques tú.
 
 **Lo que vas a poder hacer:**
@@ -38,9 +38,9 @@ confianza, para que lo verifiques tú.
 | 🗂️ **Ver todo junto** | Una sola lista con los pendientes de los próximos 7 días, sin abrir cuatro apps distintas. |
 | 🔗 **Ir directo a la fuente** | Cada pendiente enlaza al lugar exacto de donde salió — Planner, To Do, el calendario o la conversación. |
 | ✅ **Confiar en lo que es un hecho** | Lo que viene de un sistema estructurado se muestra como confirmado, sin ambigüedad. |
-| 💡 **Ver lo que es una inferencia** | Lo que Brújula detecta en una conversación se marca aparte, con su nivel de confianza y un aviso para verificarlo. |
-| 💬 **Preguntarle desde Teams** | Escribe `semana` o `ayuda` en un chat con Brújula, sin salir de donde ya trabajas. |
-| 🚧 **Saber cuándo algo falló** | Si una fuente no responde, Brújula lo dice — nunca confunde un fallo con "no tienes nada pendiente". |
+| 💡 **Ver lo que es una inferencia** | Lo que Nexo detecta en una conversación se marca aparte, con su nivel de confianza y un aviso para verificarlo. |
+| 💬 **Preguntarle desde Teams** | Escribe `semana` o `ayuda` en un chat con Nexo, sin salir de donde ya trabajas. |
+| 🚧 **Saber cuándo algo falló** | Si una fuente no responde, Nexo lo dice — nunca confunde un fallo con "no tienes nada pendiente". |
 
 ---
 
@@ -58,7 +58,7 @@ confianza, para que lo verifiques tú.
 
 ## Arquitectura
 
-Brújula es **un solo backend con dos puertas de entrada** que hacen la misma pregunta al mismo
+Nexo es **un solo backend con dos puertas de entrada** que hacen la misma pregunta al mismo
 motor interno — no hay una copia de la lógica por canal:
 
 ```
@@ -79,7 +79,7 @@ respuestas distintas a la misma pregunta.
 
 ## Instalación y arranque
 
-Este README explica **qué es** Brújula y **qué vas a poder hacer con ella**. Para levantar el
+Este README explica **qué es** Nexo y **qué vas a poder hacer con ella**. Para levantar el
 proyecto paso a paso en tu máquina — el entorno, el túnel, el servidor, y qué hacer si algo deja de
 responder — está **[`docs/GUIA-OPERACION.md`](docs/GUIA-OPERACION.md)**.
 
@@ -105,9 +105,10 @@ memoria y lectura de imágenes pegadas en Teams. `olvidar` borra la memoria de
 quien lo escribe en esa conversación. Este flujo está separado de la agenda:
 una respuesta general de Gemini no se presenta como un pendiente confirmado.
 
-El endpoint HTTP `/api/agenda` todavía usa la fuente de ejemplo. La detección
-de compromisos en mensajes de Teams y la interfaz web responsive siguen
-pendientes; se documentan en la hoja de ruta, no se muestran como terminadas.
+El endpoint HTTP `/api/agenda` todavía usa la fuente de ejemplo. En Teams,
+`vigilar` permite autorizar de forma explícita la lectura limitada de chats;
+el worker detecta sugerencias y `revisar` las muestra para que el usuario las
+acepte o descarte. La interfaz web responsive sigue pendiente.
 
 ---
 

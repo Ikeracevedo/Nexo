@@ -1,4 +1,4 @@
-# RUNBOOK — Reconstruir el entorno de Brújula desde cero
+# RUNBOOK — Reconstruir el entorno de Nexo desde cero
 
 > **Para quién:** Iker (o quien herede el proyecto). **No** es la guía para clientes —
 > esa es `GUIA-INSTALACION-TI.md`, y hace algo completamente distinto (ver §0.2).
@@ -47,7 +47,7 @@ Estas cinco no se corrigen después sin rehacer trabajo:
 
 | # | Decisión | Si te equivocas |
 |---|---|---|
-| 1 | **Tipos de cuenta compatibles = "Cuentas en cualquier directorio organizativo (multiinquilino)"** | El `CLIENT_ID` queda atado a tu tenant **para siempre**. Ninguna empresa cliente podría instalar Brújula. Hay que registrar una app nueva y reconfigurar todo |
+| 1 | **Tipos de cuenta compatibles = "Cuentas en cualquier directorio organizativo (multiinquilino)"** | El `CLIENT_ID` queda atado a tu tenant **para siempre**. Ninguna empresa cliente podría instalar Nexo. Hay que registrar una app nueva y reconfigurar todo |
 | 2 | **Cuenta de tipo *work/school*, no de consumidor** | Las cuentas `@outlook.com`/`@hotmail.com` no tienen Teams empresarial, ni Planner, ni superficie útil de Graph. Todo el proyecto se queda sin sustrato |
 | 3 | **Nombre del dominio `<algo>.onmicrosoft.com`** | No se renombra. Aparece en URLs, cuentas y capturas. Elige uno que no dé vergüenza en la sustentación |
 | 4 | **La cuenta creadora queda como administrador global** | Ese rol no se delega por conveniencia. A los compañeros se les delega la siembra de datos, **nunca las llaves del tenant** (mínimo privilegio, ADR-002, aplicado puertas adentro) |
@@ -166,7 +166,7 @@ directiva). Si sigue sin aparecer, seguir esperando y continuar con P3.
 
 | Campo | Valor |
 |---|---|
-| Nombre | `Brujula` |
+| Nombre | `Nexo` |
 | Tipos de cuenta compatibles | ⚠️ **Cuentas en cualquier directorio organizativo (multiinquilino)** — decisión irreversible #1 |
 | URI de redirección | Plataforma **Web** → `http://localhost:8000/auth/callback` |
 
@@ -238,7 +238,7 @@ que dispara el requisito de consentimiento de administrador. `Team.ReadBasic.All
 Entra advierte: *"End users cannot grant consent to newly registered multitenant apps without
 verified publishers."*
 
-Significa que, en un tenant cliente, **un usuario normal no podrá autorizar Brújula por su cuenta**
+Significa que, en un tenant cliente, **un usuario normal no podrá autorizar Nexo por su cuenta**
 mientras la app no tenga *Verified Publisher*. Solo el admin podrá. Para desarrollo propio no
 bloquea nada (eres admin). Para el modelo ISV **sí importa**, y requiere alta en el Microsoft
 Partner Network. Va documentado en la Guía de Instalación.
@@ -369,7 +369,7 @@ El scaffold del Toolkit deja marcadores de posición. Estos **no se dejan como e
 
 | Campo | Valor del scaffold | Qué poner |
 |---|---|---|
-| `name.short` / `name.full` | `teams-hello…` | `Brújula` / nombre real |
+| `name.short` / `name.full` | `teams-hello…` | `Nexo` / nombre real |
 | `description.short` / `.full` | *"short description for teams-hello"* | La descripción real del producto |
 | `bots[0].botId` | `${{BOT_ID}}` | Tu `TEAMS_BOT_ID` de P6 |
 | `developer.name` | **`My App, Inc.`** | Tu nombre / el del equipo |
@@ -436,15 +436,15 @@ reproducibles y es un artefacto de portafolio por sí solo.
 | Mensaje de canal | `POST /teams/{id}/channels/{id}/messages` | `ChannelMessage.Send` |
 
 > ⚠️ **Decisión de seguridad que hay que tomar y no improvisar.** El script necesita permisos de
-> **escritura** que Brújula **no tiene ni debe tener**. La regla del ADR-002 —cero `ReadWrite`— es
+> **escritura** que Nexo **no tiene ni debe tener**. La regla del ADR-002 —cero `ReadWrite`— es
 > el argumento comercial del producto.
 >
 > **La solución correcta: un registro de app SEPARADO**, llamado por ejemplo `brujula-seed`,
 > **de un solo inquilino**, que exista solo en tu tenant de desarrollo y no se distribuya jamás.
-> Brújula conserva sus cinco permisos de lectura intactos.
+> Nexo conserva sus cinco permisos de lectura intactos.
 >
 > **La solución incorrecta**, y es tentadora porque ahorra diez minutos: añadir los `ReadWrite` a la
-> app de Brújula "solo para sembrar". Eso mete permisos de escritura en la pantalla de
+> app de Nexo "solo para sembrar". Eso mete permisos de escritura en la pantalla de
 > consentimiento que ve el admin de TI del cliente, y **destruye el argumento más fuerte del
 > producto** para ahorrarte un registro. No lo hagas.
 
@@ -491,7 +491,7 @@ GET /teams/{team-id}/channels/{channel-id}/messages     ← ¿200 o 403?
 `Chat.Read` cubre chats 1-a-1 y grupales. Los mensajes de **canal** van por
 `ChannelMessage.Read.All`, que es *Protected API*. Y es ahí donde vive el contenido académico: el
 anuncio del profesor en el canal de la materia — **la fuente `MENSAJE`**, el pendiente amarillo, lo
-que distingue a Brújula de un agregador tonto.
+que distingue a Nexo de un agregador tonto.
 
 Si sale `403`, la vía es **RSC** (*Resource-Specific Consent*): el dueño del equipo autoriza la app
 sobre **ese** equipo, sin pasar por el admin del tenant. Encaja con el modelo ISV y con que tú eres

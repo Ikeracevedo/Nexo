@@ -10,6 +10,7 @@ from __future__ import annotations
 import logging
 from typing import Any
 
+from app.adaptadores.cliente_mongo import obtener_cliente_mongo
 from app.dominio.conversacion import MemoriaNoDisponibleError, Turno
 
 logger = logging.getLogger(__name__)
@@ -46,14 +47,7 @@ class MemoriaMongo:
         if not self._uri:
             raise MemoriaNoDisponibleError("MONGODB_URI no configurado")
         if self._cliente is None:
-            from pymongo import AsyncMongoClient
-
-            self._cliente = AsyncMongoClient(
-                self._uri,
-                tz_aware=True,
-                serverSelectionTimeoutMS=TIMEOUT_SELECCION_MS,
-                connectTimeoutMS=TIMEOUT_SELECCION_MS,
-            )
+            self._cliente = obtener_cliente_mongo(self._uri, tz_aware=True)
         return self._cliente[self._base][self._nombre_coleccion]
 
     async def _asegurar_indices(self, col: Any) -> None:
