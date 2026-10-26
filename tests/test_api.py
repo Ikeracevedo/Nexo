@@ -7,6 +7,20 @@ from app.main import app
 cliente = TestClient(app)
 
 
+def test_landing_presenta_identidad_y_primeros_pasos() -> None:
+    respuesta = cliente.get("/")
+    assert respuesta.status_code == 200
+    assert "Nexo" in respuesta.text
+    assert "conectar" in respuesta.text
+    assert "vigilar" in respuesta.text
+
+
+def test_landing_expone_icono_de_nexo() -> None:
+    respuesta = cliente.get("/static/nexo.png")
+    assert respuesta.status_code == 200
+    assert respuesta.headers["content-type"] == "image/png"
+
+
 def test_health_responde_200() -> None:
     r = cliente.get("/health")
     assert r.status_code == 200

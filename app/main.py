@@ -9,6 +9,7 @@ import logging
 from collections.abc import AsyncIterator
 
 from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
 
 from app.api.rutas import VERSION, router
 from app.bot.bot_teams import crear_bot_teams
@@ -36,6 +37,7 @@ def crear_app() -> FastAPI:
         ),
         lifespan=ciclo_de_vida,
     )
+    nucleo.mount("/static", StaticFiles(directory="app/static"), name="static")
     nucleo.include_router(router)
     nucleo.state.bot_teams = crear_bot_teams(nucleo, config)
 
