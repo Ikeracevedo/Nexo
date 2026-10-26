@@ -20,6 +20,7 @@ from __future__ import annotations
 from typing import Any
 from zoneinfo import ZoneInfo
 
+from app.adaptadores.anthropic_provider import AnthropicProvider
 from app.adaptadores.credenciales_graph_mongo import CredencialesGraphMongo
 from app.adaptadores.estado_oauth_mongo import EstadoOAuthMongo
 from app.adaptadores.estado_precarga_mongo import EstadoPrecargaMongo
@@ -40,6 +41,7 @@ from app.adaptadores.preferencias_mongo import PreferenciasMongo
 from app.adaptadores.sugerencias_mongo import SugerenciasMongo
 from app.config import Configuracion
 from app.puertos.fuente_mensajes import FuenteMensajes
+from app.puertos.llm_multimodal import LLMMultimodal
 from app.puertos.llm_provider import LLMProvider
 from app.puertos.task_source import TaskSource
 from app.servicios.servicio_agenda import ServicioAgenda
@@ -143,6 +145,17 @@ def proveedor_llm(config: Configuracion) -> LLMProvider:
     del sistema habla con el puerto. Es la promesa del ADR-006, en un sitio
     donde se puede comprobar con un `git diff`.
     """
+    return _proveedor_configurado(config)
+
+
+def proveedor_multimodal(config: Configuracion) -> LLMMultimodal:
+    """Construye el mismo proveedor para el chat con adjuntos."""
+    return _proveedor_configurado(config)
+
+
+def _proveedor_configurado(config: Configuracion) -> GeminiProvider | AnthropicProvider:
+    if config.llm_proveedor == "anthropic":
+        return AnthropicProvider(config)
     return GeminiProvider(config)
 
 
@@ -157,7 +170,7 @@ def servicio_chat_general(config: Configuracion) -> ServicioChatGeneral:
     """Chat de Julián con memoria; el modo local usa RAM si no hay Mongo."""
     memoria = MemoriaMongo(config.mongodb_uri) if config.mongodb_uri else MemoriaEnProceso()
     return ServicioChatGeneral(
-        GeminiProvider(config),
+        proveedor_multimodal(config),
         memoria,
         extractor_docx=ExtractorDocx(),
         extractor_xlsx=ExtractorXlsx(),

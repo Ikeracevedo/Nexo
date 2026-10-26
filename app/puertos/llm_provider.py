@@ -4,6 +4,7 @@
 Implementaciones previstas:
   - FakeLLMProvider  -> determinista, para tests. Sin red, sin costo.
   - GeminiProvider   -> Gemini API (proveedor confirmado en OT-01).
+  - AnthropicProvider -> Claude API, seleccionable por configuracion.
   - OllamaProvider   -> local, sin conexion ni cuota.
 """
 

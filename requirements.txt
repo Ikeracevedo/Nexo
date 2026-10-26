@@ -11,6 +11,7 @@ microsoft-teams-apps[graph]==2.0.16
 # Proveedor de LLM detras del puerto LLMProvider (ADR-006).
 # Integrado a partir del trabajo de Julian Gomez (rama feature/gemini).
 google-genai==2.23.0
+anthropic==2.3.0
 
 # Motor de persistencia para pendientes propios del usuario (FuentePropiaMongo).
 # motor llego a end-of-life el 14-may-2026; se usa AsyncMongoClient de pymongo,

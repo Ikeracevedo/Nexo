@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import re
 from functools import lru_cache
+from typing import Literal
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from pydantic import ValidationInfo, field_validator
@@ -41,6 +42,9 @@ class Configuracion(BaseSettings):
     # El modelo sale de configuracion, no del codigo: cambiarlo es
     # exactamente lo que el ADR-006 queria que costara una variable.
     gemini_modelo: str = "gemini-2.5-flash"
+    llm_proveedor: Literal["gemini", "anthropic"] = "gemini"
+    anthropic_api_key: str = ""
+    anthropic_modelo: str = "claude-haiku-4-5"
     mongodb_uri: str = ""
     brujula_url_publica: str = "https://brujula-teams.duckdns.org"
     brujula_token_encryption_key: str = ""
