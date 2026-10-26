@@ -12,3 +12,5 @@ services:
     command: ["python", "-m", "app.worker"]
     env_file:
       - .env
+    healthcheck:
+      disable: true

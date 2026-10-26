@@ -11,12 +11,12 @@ TIMEOUT_SELECCION_MS = 5000
 MAX_CONEXIONES_POR_PROCESO = 10
 
 
-@lru_cache(maxsize=4)
-def obtener_cliente_mongo(uri: str, *, tz_aware: bool = False) -> AsyncMongoClient[Any]:
+@lru_cache(maxsize=2)
+def obtener_cliente_mongo(uri: str) -> AsyncMongoClient[Any]:
     """Reutiliza un pool acotado para todos los adaptadores del proceso."""
     return AsyncMongoClient(
         uri,
-        tz_aware=tz_aware,
+        tz_aware=True,
         serverSelectionTimeoutMS=TIMEOUT_SELECCION_MS,
         connectTimeoutMS=TIMEOUT_SELECCION_MS,
         maxPoolSize=MAX_CONEXIONES_POR_PROCESO,

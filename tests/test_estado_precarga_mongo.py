@@ -52,3 +52,15 @@ async def test_obtener_reconstruye_el_estado_del_usuario() -> None:
     repo = EstadoPrecargaMongo(Configuracion(mongodb_uri="mongodb://prueba"), _coleccion=coleccion)
 
     assert await repo.obtener(USUARIO) == EstadoPrecarga(AHORA, "huella")
+
+
+async def test_obtener_asigna_utc_al_estado_historico_sin_zona_horaria() -> None:
+    coleccion = _ColeccionFalsa()
+    coleccion.documento = {
+        "usuario_id": USUARIO,
+        "ultima_precarga_en": AHORA.replace(tzinfo=None),
+        "huella_mensajes": "huella",
+    }
+    repo = EstadoPrecargaMongo(Configuracion(mongodb_uri="mongodb://prueba"), _coleccion=coleccion)
+
+    assert await repo.obtener(USUARIO) == EstadoPrecarga(AHORA, "huella")
