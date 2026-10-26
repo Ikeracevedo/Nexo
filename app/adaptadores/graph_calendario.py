@@ -63,10 +63,7 @@ class FuenteCalendarioGraph:
         query_params = CalendarViewRequestBuilder.CalendarViewRequestBuilderGetQueryParameters(
             start_date_time=desde.isoformat(), end_date_time=hasta.isoformat()
         )
-        return RequestConfiguration(
-            headers={"Prefer": 'outlook.timezone="UTC"'},
-            query_parameters=query_params,
-        )
+        return RequestConfiguration(query_parameters=query_params)
 
     @staticmethod
     def _traducir_error(e: Exception) -> FuenteNoDisponibleError:
