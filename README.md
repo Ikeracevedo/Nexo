@@ -19,11 +19,6 @@
     <img src="https://img.shields.io/badge/arquitectura-hexagonal-FF6B35" />
   </p>
 
-  <img src="docs/logo-upb.png" alt="Universidad Pontificia Bolivariana" width="170"/>
-
-  **Proyecto en TIC 1** · Ingeniería de Sistemas e Informática
-  Universidad Pontificia Bolivariana — Medellín · 2026
-
   [En 30 segundos](#en-30-segundos) · [Qué hace](#qué-hace) · [Arquitectura](#arquitectura) · [**Verifícalo tú mismo**](#verifícalo-tú-mismo) · [Instalación](#instalación-rápida-desarrollo) · [**Wiki de implantación**](../../wiki)
 
 </div>
@@ -290,5 +285,10 @@ Desarrollado con asistencia de **Claude Code** y **Codex** bajo un modelo de men
 ---
 
 <div align="center">
-<sub>Universidad Pontificia Bolivariana · Proyecto en TIC 1 · 2026</sub>
+
+  <img src="docs/logo-upb.png" alt="Universidad Pontificia Bolivariana" width="300"/>
+
+  **Proyecto en TIC 1** · Ingeniería de Sistemas e Informática<br/>
+  Universidad Pontificia Bolivariana — Medellín · 2026
+
 </div>
