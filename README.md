@@ -271,7 +271,6 @@ docker compose up -d --force-recreate   # --force-recreate: sin él no relee el 
 
 ## Equipo
 
-| | |
 |---|---|
 | **Iker Acevedo Vargas** |
 | **Julián Gómez** |
