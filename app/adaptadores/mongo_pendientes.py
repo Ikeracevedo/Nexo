@@ -1,6 +1,6 @@
 """Adaptador secundario: MongoDB para pendientes propios del usuario.
 
-Primera fuente de Brujula que NO es de Microsoft. Implementa dos puertos:
+Primera fuente de Nexo que NO es de Microsoft. Implementa dos puertos:
   - TaskSource (lectura): FuentePropiaMongo.obtener_pendientes
   - PendientesRepository (escritura): FuentePropiaMongo.guardar
 
@@ -66,7 +66,7 @@ def _filtro_pendiente_usuario(
 
 
 class FuentePropiaMongo:
-    """Pendientes creados por el usuario dentro de Brujula, en MongoDB.
+    """Pendientes creados por el usuario dentro de Nexo, en MongoDB.
 
     Implementa TaskSource (lectura) y PendientesRepository (escritura)
     sin importar ninguno de los dos puertos: tipado estructural de Python.

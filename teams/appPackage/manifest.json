@@ -14,12 +14,12 @@
         "outline": "outline.png"
     },
     "name": {
-        "short": "Brújula",
-        "full": "Brújula"
+        "short": "Nexo",
+        "full": "Nexo"
     },
     "description": {
         "short": "Tus pendientes de Microsoft 365, unificados.",
-        "full": "Brújula unifica los pendientes dispersos de Planner, To Do, Calendario y mensajes de Teams, y te dice qué tienes esta semana con enlace a la fuente exacta."
+        "full": "Nexo unifica los pendientes dispersos de Planner, To Do, Calendario y mensajes de Teams, y te dice qué tienes esta semana con enlace a la fuente exacta."
     },
     "accentColor": "#FFFFFF",
     "supportsChannelFeatures": "tier1",
@@ -77,7 +77,7 @@
                         },
                         {
                             "title": "conectar",
-                            "description": "Autoriza a Brújula a leer tu calendario real"
+                            "description": "Autoriza a Nexo a leer tu calendario real"
                         },
                         {
                             "title": "desconectar",
@@ -89,7 +89,7 @@
                         },
                         {
                             "title": "ayuda",
-                            "description": "Ver qué sabe hacer Brújula"
+                            "description": "Ver qué sabe hacer Nexo"
                         }
                     ]
                 }

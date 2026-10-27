@@ -8,7 +8,7 @@ from app.dominio.pendiente import Pendiente
 
 @runtime_checkable
 class PendientesRepository(Protocol):
-    """Contrato de escritura para pendientes creados dentro de Brujula.
+    """Contrato de escritura para pendientes creados dentro de Nexo.
 
     Complementa TaskSource (lectura). Mismo principio: el servicio
     depende de este contrato, no de la implementacion concreta (Mongo,

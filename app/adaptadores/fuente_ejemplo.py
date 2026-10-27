@@ -60,7 +60,7 @@ class FuenteEjemplo:
                 confianza=0.72,
                 contexto=(
                     "Inferido de un mensaje del canal. "
-                    "Brujula no confirma este pendiente: verificalo en el origen."
+                    "Nexo no confirma este pendiente: verificalo en el origen."
                 ),
             ),
         ]

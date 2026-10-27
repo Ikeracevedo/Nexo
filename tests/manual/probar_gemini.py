@@ -1,7 +1,7 @@
 """F7 — La bateria contra el Gemini REAL. No es un test automatico: cuesta cuota.
 
 Por que existe, y por que no vive en `tests/` a secas:
-  - `pytest` prueba que **Brujula** hace lo correcto, con `FakeLLMProvider`.
+  - `pytest` prueba que **Nexo** hace lo correcto, con `FakeLLMProvider`.
     Es determinista, gratis y corre en el CI.
   - Esto prueba algo distinto: que **el modelo real obedece la instruccion**.
     Eso no se puede afirmar sin llamarlo. Gasta cuota, necesita clave y su
@@ -61,7 +61,7 @@ AGENDA = Agenda(
     pendientes=(
         _p("Entrega de Proyecto en TIC 1", 2),
         _p("Parcial de Bases de Datos", 4),
-        _p("Reunion de equipo Brujula", 1),
+        _p("Reunion de equipo Nexo", 1),
         _p("Quiza revisar el golden dataset", 3, FuentePendiente.MENSAJE, 0.7),
     ),
     fuentes_consultadas=("calendario", "planner"),
@@ -71,7 +71,7 @@ AGENDA = Agenda(
 AGENDA_VACIA = Agenda(pendientes=(), fuentes_consultadas=("calendario",), fuentes_fallidas=())
 
 AGENDA_INCOMPLETA = Agenda(
-    pendientes=(_p("Reunion de equipo Brujula", 1),),
+    pendientes=(_p("Reunion de equipo Nexo", 1),),
     fuentes_consultadas=("calendario",),
     fuentes_fallidas=(FuenteFallida("planner", "403 Forbidden", requiere_autorizacion=True),),
 )

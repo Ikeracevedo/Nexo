@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 
-class BrujulaError(Exception):
+class NexoError(Exception):
     """
     Raiz de todos los errores propios
 
@@ -10,7 +10,7 @@ class BrujulaError(Exception):
     """
 
 
-class FuenteNoDisponibleError(BrujulaError):
+class FuenteNoDisponibleError(NexoError):
     """
     Una fuente no pudo ser consultada. NO significa 'sin pendientes'.
     """
@@ -23,7 +23,7 @@ class FuenteNoDisponibleError(BrujulaError):
         super().__init__(f"No se pudo consultar '{nombre_fuente}': {motivo}")
 
 
-class ConfiguracionInvalidaError(BrujulaError):
+class ConfiguracionInvalidaError(NexoError):
     """Falta una variable de entorno obligatoria o tiene un valor imposible."""
 
 
@@ -42,7 +42,7 @@ class FuenteSinPermisoError(FuenteNoDisponibleError):
         super().__init__(nombre_fuente, f"falta el permiso '{permiso_requerido}'")
 
 
-class LLMNoDisponibleError(BrujulaError):
+class LLMNoDisponibleError(NexoError):
     """El proveedor de modelo de lenguaje no pudo responder.
 
     Mismo principio que FuenteNoDisponibleError: un fallo del LLM NO se

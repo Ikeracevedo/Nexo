@@ -31,7 +31,7 @@ class FakeLLMProvider:
     async def generar(self, instruccion: str, contexto: str) -> str:
         # Se guardan para que un test pueda afirmar QUE se le mando al
         # modelo. Es la unica forma de verificar que el contexto que sale
-        # de Brujula es la agenda y no texto arbitrario del usuario.
+        # de Nexo es la agenda y no texto arbitrario del usuario.
         self.ultima_instruccion = instruccion
         self.ultimo_contexto = contexto
         self.llamadas += 1

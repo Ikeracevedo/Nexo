@@ -1,4 +1,4 @@
-"""Lo que Brujula le contesta a una pregunta en lenguaje natural."""
+"""Lo que Nexo le contesta a una pregunta en lenguaje natural."""
 
 from __future__ import annotations
 

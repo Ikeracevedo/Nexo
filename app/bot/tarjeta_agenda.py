@@ -109,11 +109,11 @@ def _bloque_pendiente(p: Pendiente, ahora: datetime, nombre: str) -> Container:
 
 
 def _aviso_fuentes_fallidas(agenda: Agenda) -> Container:
-    """Declara en la tarjeta lo que Brujula NO pudo consultar.
+    """Declara en la tarjeta lo que Nexo NO pudo consultar.
 
     Este bloque es la razon de existir del campo `fuentes_fallidas`. Sin el, una agenda
     incompleta se veria identica a una agenda vacia, y
-    Brujula estaria mintiendo por omision.
+    Nexo estaria mintiendo por omision.
     """
     nombres = ", ".join(f.nombre for f in agenda.fuentes_fallidas)
     por_autorizar = [f.nombre for f in agenda.fuentes_fallidas if f.requiere_autorizacion]

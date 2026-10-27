@@ -1,4 +1,4 @@
-"""Caso de uso: el usuario le dicta un pendiente a Brujula.
+"""Caso de uso: el usuario le dicta un pendiente a Nexo.
 
 Responsabilidades de este servicio:
   1. Extraer el titulo de la peticion ("recuerdame entregar el informe el viernes")

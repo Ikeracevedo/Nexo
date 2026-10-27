@@ -1,11 +1,11 @@
 """Caso de uso: responder una pregunta en lenguaje natural sobre TUS pendientes.
 
-Este servicio es el que decide el alcance de Brujula. NO el handler del bot.
+Este servicio es el que decide el alcance de Nexo. NO el handler del bot.
 
 Por que vive aqui y no en `app/bot/`:
   - El alcance del producto es una regla de negocio, no de presentacion.
   - Si viviera en el handler, el frontend web de F4 tendria que reimplementarlo
-    — y el dia que divergieran, Brujula tendria dos alcances distintos.
+    — y el dia que divergieran, Nexo tendria dos alcances distintos.
   - Aqui se puede testear con `FakeLLMProvider`: sin red, sin cuota y sin
     API key. En el handler solo se podria probar con Teams conectado.
 
@@ -110,7 +110,7 @@ SIN_RESPUESTA = (
 )
 
 _ORIGEN: dict[FuentePendiente, str] = {
-    FuentePendiente.PROPIO: "anotado por el usuario en Brujula",
+    FuentePendiente.PROPIO: "anotado por el usuario en Nexo",
     FuentePendiente.CALENDARIO: "calendario de Microsoft 365",
     FuentePendiente.TODO: "Microsoft To Do",
     FuentePendiente.PLANNER: "Microsoft Planner",

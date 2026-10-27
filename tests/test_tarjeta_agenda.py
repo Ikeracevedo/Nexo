@@ -109,7 +109,7 @@ def test_un_pendiente_confirmado_no_lleva_advertencia() -> None:
 
 def test_una_agenda_incompleta_declara_que_fuente_fallo() -> None:
     """Sin este bloque, una agenda incompleta se veria identica a una
-    agenda vacia y Brujula estaria mintiendo por omision."""
+    agenda vacia y Nexo estaria mintiendo por omision."""
     agenda = Agenda(
         pendientes=(_p("a"),),
         fuentes_consultadas=("calendario",),

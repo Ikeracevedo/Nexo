@@ -2,6 +2,8 @@
 
 > Registro vivo. Se actualiza al cerrar cada Orden de Trabajo.
 > Leer junto con `PLAN-MAESTRO.md` al inicio de cada chat.
+>
+> **Nota sobre el nombre.** El producto se llamó **Brújula** durante su desarrollo y hoy se llama **Nexo**. Las entradas de esta bitácora conservan el nombre original porque son un registro histórico. Algunos identificadores técnicos (variables `BRUJULA_*`, base de datos `brujula`, imagen `brujula-teams`) mantienen el nombre antiguo por compatibilidad con el despliegue existente.
 
 **Estado actual:** **Cierre del entregable final** (26-oct). Producto desplegado y en uso.
 **OT-06:** ✅ CERRADA — lectura de conversaciones, bandeja de sugerencias, ciclo de vida de pendientes

@@ -19,7 +19,7 @@ from app.api.dependencias import (
 from app.api.esquemas import AgendaDTO, SaludDTO
 from app.api.pagina_inicio import PAGINA_INICIO
 from app.config import obtener_configuracion
-from app.dominio.errores import BrujulaError
+from app.dominio.errores import NexoError
 from app.servicios.servicio_agenda import ServicioAgenda
 from app.servicios.servicio_autorizacion_graph import ServicioAutorizacionGraph
 
@@ -62,7 +62,7 @@ async def completar_autorizacion_graph(
         raise HTTPException(status_code=400, detail="No se completó la autorización de Microsoft.")
     try:
         await servicio.completar(state, code, datetime.now(UTC))
-    except BrujulaError as error_autorizacion:
+    except NexoError as error_autorizacion:
         raise HTTPException(
             status_code=400, detail="No se pudo conectar la cuenta."
         ) from error_autorizacion

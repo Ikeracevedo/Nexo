@@ -68,7 +68,7 @@ async def test_declara_que_la_respuesta_la_genero_una_ia() -> None:
 
 async def test_al_modelo_solo_se_le_manda_la_agenda_del_usuario() -> None:
     """La prueba de que el alcance no depende solo del prompt: el contexto
-    que sale de Brújula contiene la agenda y la pregunta, y nada más."""
+    que sale de Nexo contiene la agenda y la pregunta, y nada más."""
     llm = FakeLLMProvider()
     await ServicioConversacion(llm).responder("¿qué tengo?", _agenda(_p("Sustentación")), AHORA)
 
@@ -217,5 +217,5 @@ async def test_el_modelo_distingue_lo_anotado_por_el_usuario_de_lo_de_microsoft(
         "¿qué tengo hoy?", _agenda(propio, _p("Parcial")), AHORA
     )
     ctx = llm.ultimo_contexto or ""
-    assert "anotado por el usuario en Brujula" in ctx
+    assert "anotado por el usuario en Nexo" in ctx
     assert "calendario de Microsoft 365" in ctx
