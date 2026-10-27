@@ -11,6 +11,7 @@
     <img src="https://img.shields.io/badge/Microsoft%20Teams-bot-6264A7?logo=microsoftteams&logoColor=white" />
     <img src="https://img.shields.io/badge/MongoDB-Atlas-47A248?logo=mongodb&logoColor=white" />
     <img src="https://img.shields.io/badge/Gemini-2.5--flash-8E75B2?logo=googlegemini&logoColor=white" />
+    <img src="https://img.shields.io/badge/Claude-Anthropic%20API-D97757?logo=anthropic&logoColor=white" />
   </p>
   <p>
     <img src="https://img.shields.io/badge/tests-276%20passing-0A9EDC?logo=pytest&logoColor=white" />
@@ -280,7 +281,7 @@ Desarrollado con asistencia de **Claude Code** y **Codex** bajo un modelo de men
 
 ## Stack
 
-`Python 3.12` · `FastAPI` · `Pydantic v2` · `microsoft-teams-apps` · `Microsoft Graph SDK` · `MongoDB Atlas` (`pymongo` async) · `google-genai` · `pytest` · `mypy --strict` · `ruff` · `Docker` · `GitHub Actions` · `Azure VM` + `Caddy`
+`Python 3.12` · `FastAPI` · `Pydantic v2` · `microsoft-teams-apps` · `Microsoft Graph SDK` · `MongoDB Atlas` (`pymongo` async) · `google-genai` · `anthropic` · `pytest` · `mypy --strict` · `ruff` · `Docker` · `GitHub Actions` · `Azure VM` + `Caddy`
 
 ---
 
