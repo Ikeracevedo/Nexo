@@ -271,12 +271,13 @@ docker compose up -d --force-recreate   # --force-recreate: sin él no relee el 
 
 ## Equipo
 
-|---|---|
+| Integrante |
+|---|
 | **Iker Acevedo Vargas** |
 | **Julián Gómez** |
 | **Antonio** |
 
-Desarrollado con asistencia de **Claude Code** y **Codex** bajo un modelo de mentoría técnica: cada decisión de arquitectura quedó documentada con su alternativa descartada y su porqué, en `docs/BITACORA.md`.
+Desarrollado por Iker Acevedo Vargas, Julián Gómez y Antonio. Cada decisión de arquitectura quedó documentada con su alternativa descartada y su porqué, en `docs/BITACORA.md`.
 
 ## Stack
 
