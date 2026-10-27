@@ -240,9 +240,9 @@ docker compose up -d --force-recreate   # --force-recreate: sin él no relee el 
 
 | | |
 |---|---|
-| **Iker Acevedo Vargas** | Tech lead — arquitectura, núcleo, adaptadores de Graph, despliegue |
-| **Julián Gómez** | Integración de Gemini · lectura de archivos (PDF, Word, Excel) |
-| **Antonio** | Golden dataset |
+| **Iker Acevedo Vargas** |
+| **Julián Gómez** |
+| **Antonio** |
 
 Desarrollado con asistencia de **Claude Code** y **Codex** bajo un modelo de mentoría técnica: cada decisión de arquitectura quedó documentada con su alternativa descartada y su porqué, en `docs/BITACORA.md`.
 
