@@ -1,11 +1,9 @@
 <div align="center">
 
-  <img src="docs/logo-upb.png" alt="Universidad Pontificia Bolivariana" width="300"/>
+  <img src="docs/img/banner.png" alt="Nexo: el agente de IA para Microsoft Teams que conoce todos tus compromisos, incluso los que nadie anotó" width="100%"/>
 
-  # Nexo
-
-  **Tus pendientes están regados entre Planner, To Do, el calendario y un mensaje perdido en un chat.
-  Nexo los reúne todos — y encuentra los que nadie anotó.**
+  <h3>Tus pendientes están regados entre Planner, To Do, el calendario y un mensaje perdido en un chat.<br/>
+  Nexo los reúne todos — y encuentra los que nadie anotó.</h3>
 
   <p>
     <img src="https://img.shields.io/badge/Python-3.12-3776AB?logo=python&logoColor=white" />
@@ -15,18 +13,32 @@
     <img src="https://img.shields.io/badge/Gemini-2.5--flash-8E75B2?logo=googlegemini&logoColor=white" />
   </p>
   <p>
-    <img src="https://img.shields.io/badge/tests-272%20passing-0A9EDC?logo=pytest&logoColor=white" />
+    <img src="https://img.shields.io/badge/tests-276%20passing-0A9EDC?logo=pytest&logoColor=white" />
     <img src="https://img.shields.io/badge/mypy-strict-1F5582" />
     <img src="https://img.shields.io/badge/ruff-clean-D7FF64?logo=ruff&logoColor=black" />
     <img src="https://img.shields.io/badge/arquitectura-hexagonal-FF6B35" />
   </p>
 
+  <img src="docs/logo-upb.png" alt="Universidad Pontificia Bolivariana" width="170"/>
+
   **Proyecto en TIC 1** · Ingeniería de Sistemas e Informática
   Universidad Pontificia Bolivariana — Medellín · 2026
 
-  [Qué hace](#qué-hace) · [Cómo funciona](#cómo-funciona) · [Arquitectura](#arquitectura) · [Instalación](#instalación-rápida-desarrollo) · [**Wiki de implantación**](../../wiki)
+  [En 30 segundos](#en-30-segundos) · [Qué hace](#qué-hace) · [Arquitectura](#arquitectura) · [**Verifícalo tú mismo**](#verifícalo-tú-mismo) · [Instalación](#instalación-rápida-desarrollo) · [**Wiki de implantación**](../../wiki)
 
 </div>
+
+---
+
+## En 30 segundos
+
+| | |
+|---|---|
+| **Qué es** | Un agente de IA que vive dentro de Microsoft Teams y conoce tus compromisos: los de tu calendario, To Do y Planner, **y los que quedaron escondidos en un chat**. |
+| **Para quién** | Estudiantes, docentes y profesionales que trabajan dentro de Microsoft 365 y no quieren que algo importante se pierda entre mensajes. |
+| **Qué lo hace distinto** | Separa lo que **es un hecho** de lo que **la IA infiere**: nada deducido de una conversación entra a tu agenda hasta que tú lo aceptas. Y cada pendiente trae el enlace a su origen. |
+| **Qué garantiza** | Solo lectura, con permisos delegados del propio usuario. Si una fuente falla, lo dice: nunca lo disfraza de "no tienes nada". |
+| **Cómo probarlo** | Escríbele `semana` al bot en Teams, o levanta el proyecto local: arranca **sin credenciales**, con datos de ejemplo. |
 
 ---
 
@@ -39,11 +51,19 @@ Una persona que trabaja o estudia dentro de Microsoft 365 tiene sus compromisos 
 - Una **tarjeta** en un plan de Planner.
 - Y, sobre todo, **una frase suelta en un chat**: *"listo, mañana te paso el informe"*.
 
-Las tres primeras requieren que alguien se haya tomado el trabajo de anotarlas. **La cuarta es la que de verdad se olvida**, y es justamente la que ninguna herramienta de Microsoft recoge, porque ninguna lee tus conversaciones.
+Las tres primeras requieren que alguien se haya tomado el trabajo de anotarlas. **La cuarta es la que de verdad se olvida**, y es justamente la que ninguna de esas tres herramientas recoge, porque ninguna lee tus conversaciones.
 
 ## Qué hace
 
 Nexo es un **bot de Microsoft Teams** que responde a *"¿qué tengo esta semana?"* unificando esas cuatro fuentes, y devuelve dos listas separadas:
+
+<div align="center">
+  <img src="docs/img/demo-semana.png" alt="Ilustración de la respuesta de Nexo al comando semana: cuatro pendientes confirmados con su fuente y un posible pendiente detectado en un chat, con botones para ver el mensaje, aceptar o descartar" width="860"/>
+  <br/><sub><i>Ilustración del flujo real de <code>semana</code>. Arriba, lo que es un hecho; abajo, lo que la IA infirió y espera tu confirmación.</i></sub>
+</div>
+
+<details>
+<summary><b>Ver la misma respuesta en texto</b></summary>
 
 ```
 📋 TUS PENDIENTES (4)
@@ -56,6 +76,8 @@ Nexo es un **bot de Microsoft Teams** que responde a *"¿qué tengo esta semana?
   • Enviar la info del informe a Julián — hoy después de mediodía
     💬 Chat con Julián Gómez · confianza alta    [Ver mensaje] [Aceptar] [Descartar]
 ```
+
+</details>
 
 ### Las cuatro ideas que lo definen
 
@@ -178,12 +200,27 @@ Cuatro compuertas, verificadas en entorno limpio antes de cada entrega — `venv
 
 ```bash
 ruff check .          # ✅ limpio
-ruff format --check . # ✅ 106 archivos
-mypy                  # ✅ strict, sin errores en 106 archivos
-pytest                # ✅ 272 tests
+ruff format --check . # ✅ 108 archivos
+mypy                  # ✅ strict, sin errores en 108 archivos
+pytest                # ✅ 276 tests
 ```
 
-5.566 líneas de `app/` frente a 5.024 de `tests/`. El script `verificar-ci.ps1` reproduce el runner de CI en Windows de un solo comando. El pipeline de GitHub Actions ejecuta las cuatro y, solo si pasan, construye la imagen y despliega.
+5.671 líneas de `app/` frente a 5.092 de `tests/`. El script `verificar-ci.ps1` reproduce el runner de CI en Windows de un solo comando. El pipeline de GitHub Actions ejecuta las cuatro y, solo si pasan, construye la imagen y despliega.
+
+## Verifícalo tú mismo
+
+No pedimos que nos creas: cada afirmación de este README se puede comprobar en el código.
+
+| Afirmación | Cómo comprobarla |
+|---|---|
+| El núcleo no depende de la infraestructura | `pytest tests/test_arquitectura.py` — recorre el AST y falla si alguien rompe la regla |
+| Un fallo nunca se disfraza de lista vacía | `tests/test_servicio_agenda.py` — verifica que una fuente caída aparece en `fuentes_fallidas` con su motivo (ej. `403`) |
+| Lo inferido no entra a la agenda sin confirmación | `tests/test_servicio_sugerencias.py` — aceptar crea el pendiente y aceptar una sugerencia inexistente no crea nada |
+| Solo lectura, con permisos mínimos | `docs/GUIA-INSTALACION-TI.md` — tabla de permisos: `Calendars.Read`, `Tasks.Read`, `Chat.Read` |
+| Añadir una fuente cuesta un archivo | Un adaptador en `app/adaptadores/` y una línea en `app/composicion.py` |
+| Arranca sin credenciales | `uvicorn app.main:app` y `http://localhost:8000/health` responde `200` |
+
+Para correr todo de una vez: `pip install -r requirements-dev.txt && pytest`.
 
 ## Privacidad
 
